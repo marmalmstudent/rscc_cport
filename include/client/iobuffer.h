@@ -14,6 +14,8 @@ struct iobuffer_struct
 {
     char buffer[BUFF_SIZE];
     int offset;
+
+    void (* write_to_buffer)(IOBuffer self, char * data, int len);
 };
 
 #endif // IOBUFFER_H_INCLUDED

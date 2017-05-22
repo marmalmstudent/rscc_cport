@@ -35,6 +35,7 @@ struct iostream_struct
     int (* stdinread)(IOStream self, int len);
     int (* socketwrite)(IOStream self);
     int (* socketread)(IOStream self, int len);
+
 };
 
 #endif // IOSTRM_H

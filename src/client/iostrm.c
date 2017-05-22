@@ -8,6 +8,7 @@ static int stdinread(IOStream self, int len);
 static int socketwrite(IOStream self);
 static int socketread(IOStream self, int len);
 
+
 IOStream iostrm_ctor(const char * hostname, unsigned int port)
 {
     IOStream s = (IOStream)malloc(sizeof(struct iobuffer_struct));
@@ -51,9 +52,10 @@ void iostrm_dtor(IOStream obj)
 static int stdinread(IOStream self, int len)
 {
     int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
-    if (fgets(self->outbuffer->buffer, read_len, stdin) != NULL)
+    char * tmp = fgets(self->outbuffer->buffer, read_len, stdin);
+    if (tmp != NULL)
     {
-        self->outbuffer->offset += read_len;
+        self->outbuffer->write_to_buffer(self->outbuffer, tmp, strlen(tmp));
         return 1;
     }
     return -1;

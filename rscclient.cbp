@@ -33,10 +33,14 @@
 		</Compiler>
 		<Unit filename="include/client/client.h" />
 		<Unit filename="include/client/iobuffer.h" />
+		<Unit filename="include/client/iostrm.h" />
 		<Unit filename="src/client/client.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/client/iobuffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/client/iostrm.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

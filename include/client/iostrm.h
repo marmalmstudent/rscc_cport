@@ -10,17 +10,13 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define BUFF_SIZE 0x10000
+#include "iobuffer.h"
+
 typedef struct iostream_struct *IOStream;
 
+void error(const char *msg);
 IOStream iostrm_ctor(const char * hostname, unsigned int port);
 void iostrm_dtor(IOStream obj);
-
-struct iobuffer_struct
-{
-    char buffer[BUFF_SIZE];
-    int offset;
-};
 
 struct iostream_struct
 {
@@ -30,8 +26,8 @@ struct iostream_struct
     struct sockaddr_in *serv_addr;
     struct hostent *server;
 
-    struct iobuffer_struct *inbuffer;
-    struct iobuffer_struct *outbuffer;
+    IOBuffer inbuffer;
+    IOBuffer outbuffer;
 
     int (* opnsock)(IOStream self);
     int (* clssock)(IOStream self);
@@ -40,7 +36,5 @@ struct iostream_struct
     int (* socketwrite)(IOStream self);
     int (* socketread)(IOStream self, int len);
 };
-
-static void error(const char *msg);
 
 #endif // IOSTRM_H

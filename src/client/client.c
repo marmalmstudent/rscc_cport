@@ -2,7 +2,7 @@
 
 void error(const char *msg)
 {
-    perror(msg);
+    fprintf(stderr, msg);
     exit(0);
 }
 

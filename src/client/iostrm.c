@@ -13,10 +13,8 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     IOStream s = (IOStream)malloc(sizeof(struct iobuffer_struct));
 
     /* in and out streams */
-    s->inbuffer = (struct iobuffer_struct *)malloc(sizeof(struct iobuffer_struct));
-    s->outbuffer = (struct iobuffer_struct *)malloc(sizeof(struct iobuffer_struct));
-    memset(s->inbuffer->buffer, 0, BUFF_SIZE);
-    memset(s->outbuffer->buffer, 0, BUFF_SIZE);
+    s->inbuffer = iobuffer_ctor();
+    s->outbuffer = iobuffer_ctor();
 
     /* socket addres */
     s->serv_addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
@@ -27,7 +25,7 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     s->portno = port;
     s->server = gethostbyname(hostname);
     if (s->server == NULL)
-        error("ERROR, no such host\n");
+        fprintf(stderr, "ERROR no such host %s\n", hostname);
     bcopy((char *)s->server->h_addr, (char *)&s->serv_addr->sin_addr.s_addr,
          s->server->h_length);
     s->serv_addr->sin_port = htons(s->portno);
@@ -44,9 +42,9 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
 
 void iostrm_dtor(IOStream obj)
 {
-    free(obj->inbuffer);
-    free(obj->outbuffer);
     free(obj->serv_addr);
+    iobuffer_dtor(obj->inbuffer);
+    iobuffer_dtor(obj->outbuffer);
     free(obj);
 }
 
@@ -111,10 +109,4 @@ static int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,
                    sizeof(struct sockaddr_in));
-}
-
-void error(const char *msg)
-{
-    fprintf(stderr, msg);
-    exit(0);
 }

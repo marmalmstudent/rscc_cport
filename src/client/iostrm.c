@@ -1,5 +1,13 @@
 #include "../../include/client/iostrm.h"
 
+/* private functions */
+static int openSocket(IOStream self);
+static int closeSocket(IOStream self);
+static int connectSock(IOStream self);
+static int stdinread(IOStream self, int len);
+static int socketwrite(IOStream self);
+static int socketread(IOStream self, int len);
+
 IOStream iostrm_ctor(const char * hostname, unsigned int port)
 {
     IOStream s = (IOStream)malloc(sizeof(struct iobuffer_struct));
@@ -50,7 +58,7 @@ static int stdinread(IOStream self, int len)
         self->outbuffer->offset += read_len;
         return 1;
     }
-    return 0;
+    return -1;
 }
 
 /* write offset bytes of data from buffer to socket */

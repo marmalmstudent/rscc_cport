@@ -16,7 +16,7 @@ typedef struct iostream_struct *IOStream;
 IOStream iostrm_ctor(const char * hostname, unsigned int port);
 void iostrm_dtor(IOStream obj);
 
-static struct iobuffer_struct
+struct iobuffer_struct
 {
     char buffer[BUFF_SIZE];
     int offset;
@@ -40,13 +40,6 @@ struct iostream_struct
     int (* socketwrite)(IOStream self);
     int (* socketread)(IOStream self, int len);
 };
-
-static int openSocket(IOStream self);
-static int closeSocket(IOStream self);
-static int connectSock(IOStream self);
-static int stdinread(IOStream self, int len);
-static int socketwrite(IOStream self);
-static int socketread(IOStream self, int len);
 
 static void error(const char *msg);
 

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
 
     printf("Please enter the message: ");
-    if (c->stream->stdinread(c->stream, BUFF_SIZE) == NULL)
+    if (c->stream->stdinread(c->stream, BUFF_SIZE) < 0)
         error("ERROR reading from standard input");
 
     // write input to socket
@@ -44,6 +44,6 @@ Client client_ctor(const char * hostname, unsigned int port)
 
 void client_dtor(Client obj)
 {
-    iobuffer_dtor(obj->stream);
+    iostrm_dtor(obj->stream);
     free(obj);
 }

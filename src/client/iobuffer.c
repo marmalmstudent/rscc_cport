@@ -7,7 +7,7 @@ IOBuffer iobuffer_ctor()
 {
     IOBuffer b = (IOBuffer)malloc(sizeof(struct iobuffer_struct));
     memset(b->buffer, 0, BUFF_SIZE);
-    b->write_to_buffer = write_to_buffer;
+    b->write_to_buffer = &write_to_buffer;
     return b;
 }
 
@@ -20,7 +20,7 @@ void iobuffer_dtor(IOBuffer obj)
 static int write_to_buffer(IOBuffer self, char * data, int len)
 {
     if (len > BUFF_SIZE - self->offset)
-        return -1;
+        return -1; // buffer overflow
     while(len-- > 0)
         self->buffer[self->offset++] = *(data++);
     return 1;

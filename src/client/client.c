@@ -8,8 +8,9 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
+    if (argc < 3)
+    { // insufficient arguments
+       fprintf(stderr, "usage %s hostname port\n", argv[0]);
        exit(0);
     }
     Client c = client_ctor(argv[1], (unsigned int)atoi(argv[2]));

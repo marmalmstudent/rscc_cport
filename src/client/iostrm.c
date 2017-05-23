@@ -31,7 +31,10 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     s->portno = port;
     s->server = gethostbyname(hostname);
     if (s->server == NULL)
+    {
         fprintf(stderr, "ERROR no such host %s\n", hostname);
+        exit(0);
+    }
     bcopy((char *)s->server->h_addr, (char *)&s->serv_addr->sin_addr.s_addr,
          s->server->h_length);
     s->serv_addr->sin_port = htons(s->portno);
@@ -48,9 +51,9 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
 
 void iostrm_dtor(IOStream obj)
 {
-    free(obj->serv_addr);
     iobuffer_dtor(obj->inbuffer);
     iobuffer_dtor(obj->outbuffer);
+    free(obj->serv_addr);
     free(obj);
 }
 
@@ -83,9 +86,8 @@ static int socketwrite(IOStream self)
 /* read len bytes of data from socket to buffer */
 static int socketread(IOStream self, int len)
 {
-    int flag = 0;
-    int len_read;
-    if (len < BUFF_SIZE)
+    int flag = 0, len_read;
+    if (len <= BUFF_SIZE)
         len_read = len;
     else
     {
@@ -93,9 +95,14 @@ static int socketread(IOStream self, int len)
         flag = 2; // buffer size not big enough
     }
     int bytesread = read(self->sockfd, self->inbuffer->buffer, len_read);
-    if (bytesread != len_read)
-        flag = 1; // could not read all data
-    self->inbuffer->offset = 0;
+    if (bytesread >= 0)
+    {
+        if (bytesread != len_read)
+            flag |= 1; // could not read all data
+        self->inbuffer->offset = 0;
+    }
+    else
+        flag = -1; // an error occured
     return flag;
 }
 
@@ -106,18 +113,18 @@ static int openSocket(IOStream self)
     bcopy((char *)self->server->h_addr, (char *)&self->serv_addr->sin_addr.s_addr,
           self->server->h_length);
     self->serv_addr->sin_port = htons(self->portno);
-    return self->sockfd < 0 ? 1 : 0;
+    return self->sockfd < 0 ? -1 : 1;
 }
 
 /* closes the socket */
 static int closeSocket(IOStream self)
 {
-    return close(self->sockfd);
+    return close(self->sockfd) < 0 ? -1 : 1;
 }
 
 /* attemps to connect the socket to the port and address */
 static int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,
-                   sizeof(struct sockaddr_in));
+                   sizeof(struct sockaddr_in)) < 0 ? -1 : 1;
 }

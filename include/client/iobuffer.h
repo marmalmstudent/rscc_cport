@@ -7,9 +7,12 @@
 #define BUFF_SIZE 0x10000
 typedef struct iobuffer_struct *IOBuffer;
 
+/** Constructor */
 IOBuffer iobuffer_ctor();
+/** Destructor */
 void iobuffer_dtor(IOBuffer obj);
 
+/** The IOBuffer declaration */
 struct iobuffer_struct
 {
     char buffer[BUFF_SIZE];

@@ -12,12 +12,15 @@
 
 #include "iobuffer.h"
 
+/** Class hadling the input and output streams related to the socket */
 typedef struct iostream_struct *IOStream;
 
-void error(const char *msg);
+/** Constructor */
 IOStream iostrm_ctor(const char * hostname, unsigned int port);
+/** Destructor */
 void iostrm_dtor(IOStream obj);
 
+/** The IOStream declaration */
 struct iostream_struct
 {
     int sockfd;

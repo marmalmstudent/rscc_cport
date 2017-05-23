@@ -1,13 +1,18 @@
 #include "../../include/client/iostrm.h"
 
 /* private functions */
+/** opens the current (TCP) socket with current port and address */
 static int openSocket(IOStream self);
+/** closes the socket */
 static int closeSocket(IOStream self);
+/** attemps to connect the socket to the port and address */
 static int connectSock(IOStream self);
+/** reads len bytes of data from the standard input */
 static int stdinread(IOStream self, int len);
+/** write offset bytes of data from buffer to socket */
 static int socketwrite(IOStream self);
+/** read len bytes of data from socket to buffer */
 static int socketread(IOStream self, int len);
-
 
 IOStream iostrm_ctor(const char * hostname, unsigned int port)
 {
@@ -49,6 +54,7 @@ void iostrm_dtor(IOStream obj)
     free(obj);
 }
 
+/* reads len bytes of data from the standard input */
 static int stdinread(IOStream self, int len)
 {
     int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
@@ -93,6 +99,7 @@ static int socketread(IOStream self, int len)
     return flag;
 }
 
+/* opens the current (TCP) socket with current port and address */
 static int openSocket(IOStream self)
 {
     self->sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -102,11 +109,13 @@ static int openSocket(IOStream self)
     return self->sockfd < 0 ? 1 : 0;
 }
 
+/* closes the socket */
 static int closeSocket(IOStream self)
 {
     return close(self->sockfd);
 }
 
+/* attemps to connect the socket to the port and address */
 static int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,

@@ -1,5 +1,6 @@
 #include "../../include/client/iobuffer.h"
 
+/** writes len bytes from data to buffer */
 static int write_to_buffer(IOBuffer self, char * data, int len);
 
 IOBuffer iobuffer_ctor()
@@ -15,6 +16,7 @@ void iobuffer_dtor(IOBuffer obj)
     free(obj);
 }
 
+/* writes len bytes from data to buffer */
 static int write_to_buffer(IOBuffer self, char * data, int len)
 {
     if (len > BUFF_SIZE - self->offset)

@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <pthread.h>
 
 #include "iobuffer.h"
 
@@ -23,6 +24,11 @@ void iostrm_dtor(IOStream obj);
 /** The IOStream declaration */
 struct iostream_struct
 {
+    int streamopen;  // condition for shutting down the thread
+    pthread_t *thrd;
+    int tret;
+    pthread_cond_t *cond;
+
     int sockfd;
     int portno;
     int n;
@@ -38,6 +44,8 @@ struct iostream_struct
     int (* stdinread)(IOStream self, int len);
     int (* socketwrite)(IOStream self);
     int (* socketread)(IOStream self, int len);
+    void *(* iostrm_trun)(void *ptr);
+    void (* iostrm_tstart)(IOStream self);
 
 };
 

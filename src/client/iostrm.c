@@ -14,13 +14,16 @@ static int socketwrite(IOStream self);
 /** read len bytes of data from socket to buffer */
 static int socketread(IOStream self, int len);
 
+/** Thread control */
+static void *iostrm_trun(void *ptr);
+/** Thread start */
+static void iostrm_tstart(IOStream self);
+
+static pthread_mutex_t mutx;
+
 IOStream iostrm_ctor(const char * hostname, unsigned int port)
 {
     IOStream s = (IOStream)malloc(sizeof(struct iobuffer_struct));
-
-    /* in and out streams */
-    s->inbuffer = iobuffer_ctor();
-    s->outbuffer = iobuffer_ctor();
 
     /* socket addres */
     s->serv_addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
@@ -39,6 +42,14 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
          s->server->h_length);
     s->serv_addr->sin_port = htons(s->portno);
 
+    /* thread control */
+    s->thrd = (pthread_t *)malloc(sizeof(pthread_t));
+    s->cond = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
+
+    /* in and out streams */
+    s->inbuffer = iobuffer_ctor(&mutx, s->cond);
+    s->outbuffer = iobuffer_ctor(&mutx, s->cond);
+
     /* set struct functions */
     s->opnsock = &openSocket;
     s->clssock = &closeSocket;
@@ -46,6 +57,9 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     s->stdinread = &stdinread;
     s->socketwrite = &socketwrite;
     s->socketread = &socketread;
+    /* thread functions */
+    s->iostrm_tstart = &iostrm_tstart;
+    s->iostrm_trun = &iostrm_trun;
     return s;
 }
 
@@ -127,4 +141,29 @@ static int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,
                    sizeof(struct sockaddr_in)) < 0 ? -1 : 1;
+}
+
+/* start the thread */
+static void iostrm_tstart(IOStream self)
+{
+    self->tret = pthread_create(self->thrd, NULL,
+                                self->iostrm_trun, self);
+    self->streamopen = 1;
+}
+
+/* run the thread */
+static void *iostrm_trun(void *ptr)
+{
+    IOStream self = (IOStream)ptr;
+    printf("Thread running...\n");
+    while(self->streamopen)
+    {
+        pthread_mutex_lock(&mutx); // start of synchronize block in java
+        while(self->outbuffer->offset == 0 && self->streamopen)
+            pthread_cond_wait(self->cond, &mutx);
+        pthread_mutex_unlock(&mutx); // end of synchronize block in java// write input to socket
+        if (self->socketwrite(self) < 0)
+            fprintf(stderr, "ERROR writing to socket");
+    }
+    return NULL;
 }

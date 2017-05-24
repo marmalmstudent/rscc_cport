@@ -31,6 +31,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Linker>
+			<Add option="-lpthread" />
+		</Linker>
 		<Unit filename="include/client/client.h" />
 		<Unit filename="include/client/iobuffer.h" />
 		<Unit filename="include/client/iostrm.h" />

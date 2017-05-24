@@ -20,18 +20,25 @@ int main(int argc, char *argv[])
     if (c->stream->cnctsock(c->stream) < 0)
         error("ERROR connecting");
 
+    /* start thread, it reads from the socket */
+    c->stream->iostrm_tstart(c->stream);
+
     printf("Please enter the message: ");
     if (c->stream->stdinread(c->stream, BUFF_SIZE) < 0)
         error("ERROR reading from standard input");
 
-    // write input to socket
-    if (c->stream->socketwrite(c->stream) < 0)
-         error("ERROR writing to socket");
+    /* input thread should have sent message */
 
     // read from socket
     if (c->stream->socketread(c->stream, BUFF_SIZE) < 0)
          error("ERROR reading from socket");
     printf("%s\n", c->stream->inbuffer->buffer);
+
+    c->stream->streamopen = 0; // close stream
+    pthread_cond_signal(c->stream->cond); // notify thread
+    pthread_join(*c->stream->thrd, NULL); // wait for thread to finish
+    c->stream->clssock(c->stream);
+
     client_dtor(c);
     return 0;
 }

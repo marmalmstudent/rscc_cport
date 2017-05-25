@@ -32,7 +32,7 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Linker>
-			<Add option="-lpthread" />
+			<Add option="-pthread" />
 		</Linker>
 		<Unit filename="include/client/client.h" />
 		<Unit filename="include/client/iobuffer.h" />

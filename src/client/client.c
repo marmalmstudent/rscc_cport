@@ -34,10 +34,8 @@ int main(int argc, char *argv[])
          error("ERROR reading from socket");
     printf("%s\n", c->stream->inbuffer->buffer);
 
-    c->stream->streamopen = 0; // close stream
-    pthread_cond_signal(c->stream->cond); // notify thread
-    pthread_join(*c->stream->thrd, NULL); // wait for thread to finish
     c->stream->clssock(c->stream);
+    pthread_join(*c->stream->thrd, NULL); // wait for thread to finish
 
     client_dtor(c);
     return 0;

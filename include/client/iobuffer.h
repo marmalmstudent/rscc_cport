@@ -5,7 +5,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#define BUFF_SIZE 0x10000
+#define BUFF_SIZE 0x1000
 typedef struct iobuffer_struct *IOBuffer;
 
 /** Constructor */

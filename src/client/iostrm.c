@@ -127,20 +127,22 @@ static int openSocket(IOStream self)
     bcopy((char *)self->server->h_addr, (char *)&self->serv_addr->sin_addr.s_addr,
           self->server->h_length);
     self->serv_addr->sin_port = htons(self->portno);
-    return self->sockfd < 0 ? -1 : 1;
+    return self->sockfd;
 }
 
 /* closes the socket */
 static int closeSocket(IOStream self)
 {
-    return close(self->sockfd) < 0 ? -1 : 1;
+    self->streamopen = 0; // close stream
+    pthread_cond_signal(self->cond); // notify thread
+    return close(self->sockfd);
 }
 
 /* attemps to connect the socket to the port and address */
 static int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,
-                   sizeof(struct sockaddr_in)) < 0 ? -1 : 1;
+                   sizeof(struct sockaddr_in));
 }
 
 /* start the thread */
@@ -155,15 +157,15 @@ static void iostrm_tstart(IOStream self)
 static void *iostrm_trun(void *ptr)
 {
     IOStream self = (IOStream)ptr;
-    printf("Thread running...\n");
     while(self->streamopen)
     {
         pthread_mutex_lock(&mutx); // start of synchronize block in java
-        while(self->outbuffer->offset == 0 && self->streamopen)
+        if (self->outbuffer->offset == 0)
             pthread_cond_wait(self->cond, &mutx);
-        pthread_mutex_unlock(&mutx); // end of synchronize block in java// write input to socket
-        if (self->socketwrite(self) < 0)
-            fprintf(stderr, "ERROR writing to socket");
+        pthread_mutex_unlock(&mutx); // end of synchronize block in java
+        if (self->streamopen)
+            if (self->socketwrite(self) < 0)
+                fprintf(stderr, "ERROR writing to socket");
     }
     return NULL;
 }

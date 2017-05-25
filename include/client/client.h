@@ -27,6 +27,4 @@ struct client_struct
     DataEnctyption dencrpt;
 };
 
-void encryptPacketWithKeys(mpz_t k, mpz_t m);
-
 #endif // CLIENT_H

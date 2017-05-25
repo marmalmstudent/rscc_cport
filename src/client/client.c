@@ -55,8 +55,3 @@ void client_dtor(Client obj)
     dataencryption_dtor(obj->dencrpt);
     free(obj);
 }
-
-void encryptPacketWithKeys(mpz_t k, mpz_t m)
-{
-    mpz_import (z, sizeof(arr), 1, sizeof(char), 0, 0, arr);
-}

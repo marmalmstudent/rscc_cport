@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <gmp.h>
+#include <string.h>
 
 #define PKT_SIZE 500
 
@@ -16,9 +17,11 @@ void dataencryption_dtor(DataEnctyption obj);
 /** The DataEnctyption declaration */
 struct dataencryption_struct
 {
-    char *packet;
+    char packet[PKT_SIZE];
     int offset;
     mpz_t encrptkey, encrptmod;
+
+    void (* encryptPacketWithKeys)(DataEnctyption self);
 };
 
 #endif // DATAENCTYPTION_H

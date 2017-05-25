@@ -33,11 +33,16 @@
 		</Compiler>
 		<Linker>
 			<Add option="-pthread" />
+			<Add option="-lgmp" />
 		</Linker>
 		<Unit filename="include/client/client.h" />
+		<Unit filename="include/client/dataenctyption.h" />
 		<Unit filename="include/client/iobuffer.h" />
 		<Unit filename="include/client/iostrm.h" />
 		<Unit filename="src/client/client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/client/dataenctryption.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/client/iobuffer.c">

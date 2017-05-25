@@ -7,6 +7,8 @@
 #include <pthread.h>
 
 #include "iostrm.h"
+#include "dataenctyption.h"
+
 
 /** Prints an error message and exits the program */
 void error(const char *msg);
@@ -22,6 +24,9 @@ void client_dtor(Client obj);
 struct client_struct
 {
     IOStream stream;
+    DataEnctyption dencrpt;
 };
+
+void encryptPacketWithKeys(mpz_t k, mpz_t m);
 
 #endif // CLIENT_H

@@ -45,11 +45,18 @@ Client client_ctor(const char * hostname, unsigned int port)
 {
     Client c = (Client)malloc(sizeof(struct client_struct));
     c->stream = iostrm_ctor(hostname, port);
+    c->dencrpt = dataencryption_ctor();
     return c;
 }
 
 void client_dtor(Client obj)
 {
     iostrm_dtor(obj->stream);
+    dataencryption_dtor(obj->dencrpt);
     free(obj);
+}
+
+void encryptPacketWithKeys(mpz_t k, mpz_t m)
+{
+    mpz_import (z, sizeof(arr), 1, sizeof(char), 0, 0, arr);
 }

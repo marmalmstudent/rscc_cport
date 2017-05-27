@@ -2,12 +2,12 @@
 
 #include <stdlib.h>
 
-static union duni
+union duni
 {
     char c[sizeof(double)];
     double d;
 };
-static union funi
+union funi
 {
     char c[sizeof(float)];
     float f;

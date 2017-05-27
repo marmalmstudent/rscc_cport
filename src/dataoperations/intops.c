@@ -2,14 +2,14 @@
 
 #include <string.h>
 
-static union s1b_uni { char c[sizeof(char)]; char i; };
-static union u1b_uni { char c[sizeof(char)]; unsigned char i; };
-static union s2b_uni { char c[sizeof(short)]; short i; };
-static union u2b_uni { char c[sizeof(short)]; unsigned short i; };
-static union s4b_uni { char c[sizeof(int)]; int i; };
-static union u4b_uni { char c[sizeof(int)]; unsigned int i; };
-static union s8b_uni { char c[sizeof(long)]; long i; };
-static union u8b_uni { char c[sizeof(long)]; unsigned long i; };
+union s1b_uni { char c[sizeof(char)]; char i; };
+union u1b_uni { char c[sizeof(char)]; unsigned char i; };
+union s2b_uni { char c[sizeof(short)]; short i; };
+union u2b_uni { char c[sizeof(short)]; unsigned short i; };
+union s4b_uni { char c[sizeof(int)]; int i; };
+union u4b_uni { char c[sizeof(int)]; unsigned int i; };
+union s8b_uni { char c[sizeof(long)]; long i; };
+union u8b_uni { char c[sizeof(long)]; unsigned long i; };
 
 char rs1b(char *src)
 {

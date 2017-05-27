@@ -37,7 +37,6 @@
 		</Linker>
 		<Unit filename="include/client/client.h" />
 		<Unit filename="include/client/dataenctyption.h" />
-		<Unit filename="include/client/dataoperations.h" />
 		<Unit filename="include/client/iobuffer.h" />
 		<Unit filename="include/client/iostrm.h" />
 		<Unit filename="include/dataoperations/floatops.h" />
@@ -47,9 +46,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/client/dataenctryption.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/client/dataoperations.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/client/iobuffer.c">

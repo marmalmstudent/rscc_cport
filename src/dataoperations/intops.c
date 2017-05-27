@@ -1,84 +1,99 @@
 #include "../../include/dataoperations/intops.h"
 
-int r1b(char *arr, int sign)
+char rs1b(char *src)
 {
-    return (int) (sign > 0 ? (unsigned char)*arr : *arr);
+    union s1b_uni uni;
+    memcpy(uni.c, src, sizeof(char));
+    return uni.i;
+}
+unsigned char ru1b(char *src)
+{
+    union u1b_uni uni;
+    memcpy(uni.c, src, sizeof(char));
+    return uni.i;
+}
+short rs2b(char *src)
+{
+    union s2b_uni uni;
+    memcpy(uni.c, src, sizeof(short));
+    return uni.i;
+}
+unsigned short ru2b(char *src)
+{
+    union u2b_uni uni;
+    memcpy(uni.c, src, sizeof(short));
+    return uni.i;
+}
+int rs4b(char *src)
+{
+    union s4b_uni uni;
+    memcpy(uni.c, src, sizeof(int));
+    return uni.i;
+}
+unsigned int ru4b(char *src)
+{
+    union u4b_uni uni;
+    memcpy(uni.c, src, sizeof(int));
+    return uni.i;
+}
+long rs8b(char *src)
+{
+    union s8b_uni uni;
+    memcpy(uni.c, src, sizeof(long));
+    return uni.i;
+}
+unsigned long ru8b(char *src)
+{
+    union u8b_uni uni;
+    memcpy(uni.c, src, sizeof(long));
+    return uni.i;
 }
 
-int r2b(char *arr, int sign, int endian)
+void ws1b(char *src, char var)
 {
-    unsigned short out;
-    if (endian < 0) // little endian
-        out = ((r1b(arr+1, 1) << 8) | r1b(arr, 1));
-    else
-        out = ((r1b(arr, 1) << 8) | r1b(arr+1, 1));
-    if (sign < 0)
-        return (int) ((short) out);
-    return (int) out;
+    union s1b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(char));
 }
-int r4b(char *arr, int endian)
+void wu1b(char *src, unsigned char var)
 {
-    unsigned int out;
-    if (endian < 0) // little endian
-        out = ((r2b(arr+2, 1, endian) << 16) | r2b(arr, 1, endian));
-    else
-        out = ((r2b(arr, 1, endian) << 16) | r2b(arr+2, 1, endian));
-    return (int) out;
+    union u1b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(char));
 }
-long r8b(char *arr, int endian)
+void ws2b(char *src, short var)
 {
-    unsigned long out;
-    if (endian < 0) // little endian
-        out = (((unsigned long) r4b(arr+4, endian) << 32)
-               | (unsigned long) r4b(arr, endian));
-    else
-        out = (((unsigned long) r4b(arr, endian) << 32)
-               | (unsigned long) r4b(arr+4, endian));
-    return (long) out;
+    union s2b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(short));
 }
-
-void w1b(char *arr, int val)
+void wu2b(char *src, unsigned short var)
 {
-    *arr = (char) val;
+    union u2b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(short));
 }
-
-void w2b(char *arr, int val, int endian)
+void ws4b(char *src, int var)
 {
-    if (endian < 0)
-    {// little endian
-        w1b(arr+1, val >> 8);
-        w1b(arr, val);
-    }
-    else
-    {
-        w1b(arr, val >> 8);
-        w1b(arr+1, val);
-    }
+    union s4b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(int));
 }
-
-void w4b(char *arr, int val, int endian)
+void wu4b(char *src, unsigned int var)
 {
-    if (endian < 0)
-    {// little endian
-        w2b(arr+2, val >> 16, endian);
-        w2b(arr, val, endian);
-    }
-    else
-    {
-        w2b(arr, val >> 16, endian);
-        w2b(arr+2, val, endian);
-    }
+    union u4b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(int));
 }
-void w8b(char *arr, long val, int endian)
+void ws8b(char *src, long var)
 {
-    if (endian < 0)
-    {// little endian
-        w4b(arr+4, (int) (val >> 32), endian);
-        w4b(arr, (int) val, endian);
-    }
-    else
-    {
-        w4b(arr, (int) (val >> 32), endian);
-        w4b(arr+4, (int) val, endian);
-    }
+    union s8b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(long));
+}
+void wu8b(char *src, unsigned long var)
+{
+    union u8b_uni uni;
+    uni.i = var;
+    memcpy(src, uni.c, sizeof(long));
 }

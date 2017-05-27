@@ -32,10 +32,10 @@ int main(int argc, char *argv[])
     // read from socket
     if (c->stream->socketread(c->stream, BUFF_SIZE) < 0)
          error("ERROR reading from socket");
-    printf("%s\n", c->stream->inbuffer->buffer);
+    printf("%s\n", c->stream->inbuffer->bfr);
 
     c->stream->clssock(c->stream);
-    pthread_join(*c->stream->thrd, NULL); // wait for thread to finish
+    pthread_join(c->stream->thrd, NULL); // wait for thread to finish
 
     client_dtor(c);
     return 0;
@@ -45,13 +45,13 @@ Client client_ctor(const char * hostname, unsigned int port)
 {
     Client c = (Client)malloc(sizeof(struct client_struct));
     c->stream = iostrm_ctor(hostname, port);
-    c->dencrpt = dataencryption_ctor();
+    c->dencrpt = crypto_ctor();
     return c;
 }
 
 void client_dtor(Client obj)
 {
     iostrm_dtor(obj->stream);
-    dataencryption_dtor(obj->dencrpt);
+    crypto_dtor(obj->dencrpt);
     free(obj);
 }

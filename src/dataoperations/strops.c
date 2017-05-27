@@ -1,5 +1,8 @@
 #include "../../include/dataoperations/strops.h"
 
+#include <string.h>
+#include <ctype.h> // for tolower & toupper
+
 int skipLeadingNonChars(const char *src)
 {
     int len = strlen(src), s;
@@ -74,4 +77,19 @@ long stringLength12ToLong(char *src)
             l += 27 + (tmp[k++] - '0');
     }
     return l;
+}
+
+void getBytes(const char *src, char *dst, int len)
+{
+    memcpy(dst, src, len);
+}
+
+int addString(const char *src, char *dst)
+{
+    int len = strlen(src);
+    memcpy(dst, src, len);
+    char *bgn = dst;
+    *dst += len;
+    *dst++ = 10;
+    return dst - bgn;
 }

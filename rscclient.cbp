@@ -36,22 +36,13 @@
 			<Add option="-lgmp" />
 		</Linker>
 		<Unit filename="include/client/client.h" />
-		<Unit filename="include/client/dataenctyption.h" />
-		<Unit filename="include/client/iobuffer.h" />
-		<Unit filename="include/client/iostrm.h" />
 		<Unit filename="include/dataoperations/floatops.h" />
 		<Unit filename="include/dataoperations/intops.h" />
 		<Unit filename="include/dataoperations/strops.h" />
+		<Unit filename="include/iooperations/buffer.h" />
+		<Unit filename="include/iooperations/crypto.h" />
+		<Unit filename="include/iooperations/iostrm.h" />
 		<Unit filename="src/client/client.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/client/dataenctryption.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/client/iobuffer.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/client/iostrm.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/dataoperations/floatops.c">
@@ -61,6 +52,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/dataoperations/strops.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/iooperations/buffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/iooperations/crypto.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/iooperations/iostrm.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

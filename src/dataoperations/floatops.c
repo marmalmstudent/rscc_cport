@@ -1,5 +1,18 @@
 #include "../../include/dataoperations/floatops.h"
 
+#include <stdlib.h>
+
+static union duni
+{
+    char c[sizeof(double)];
+    double d;
+};
+static union funi
+{
+    char c[sizeof(float)];
+    float f;
+};
+
 double rd(char *arr, int endian)
 {
     int dval = sizeof(double);

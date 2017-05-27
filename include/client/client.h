@@ -6,8 +6,8 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "iostrm.h"
-#include "dataenctyption.h"
+#include "../iooperations/iostrm.h"
+#include "../iooperations/crypto.h"
 
 
 /** Prints an error message and exits the program */
@@ -24,7 +24,7 @@ void client_dtor(Client obj);
 struct client_struct
 {
     IOStream stream;
-    DataEnctyption dencrpt;
+    Crypto dencrpt;
 };
 
 #endif // CLIENT_H

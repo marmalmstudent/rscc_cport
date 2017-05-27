@@ -147,9 +147,9 @@ static int connectSock(IOStream self)
 /* start the thread */
 static void iostrm_tstart(IOStream self)
 {
-    self->tret = pthread_create(&self->thrd, NULL,
-                                self->iostrm_trun, self);
     self->streamopen = 1;
+    self->tret = pthread_create(&self->thrd, NULL,
+                                self->iostrm_trun, (void *)self);
 }
 
 /* run the thread */

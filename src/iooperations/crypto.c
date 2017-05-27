@@ -18,7 +18,7 @@ static void initCryptoVals()
 Crypto crypto_ctor()
 {
     Crypto c = (Crypto)malloc(sizeof(struct crypto_struct));
-    buffer_ctor(500);
+    c->buff = buffer_ctor(500);
     initCryptoVals(); // make encryption keys
     return c;
 }

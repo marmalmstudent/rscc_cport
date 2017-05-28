@@ -6,6 +6,7 @@
 
 #include "../../include/dataoperations/intops.h"
 
+#define BUFF_SIZE 500
 struct crypto_struct
 {
     IOBuffer buff;
@@ -23,7 +24,7 @@ static void initCryptoVals()
 Crypto crypto_ctor()
 {
     Crypto c = (Crypto)malloc(sizeof(struct crypto_struct));
-    c->buff = buffer_ctor(500);
+    c->buff = buffer_ctor(BUFF_SIZE);
     initCryptoVals(); // make encryption keys
     return c;
 }

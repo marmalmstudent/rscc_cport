@@ -49,7 +49,7 @@ void encryptPacketWithKeys(Crypto self)
     /* copy data to packade of smallest required length */
     char dummyPackage[get_used_size(self->buff)];
     copy_data(self->buff, dummyPackage);
-    reset_buffer(self->buff);
+    reset(self->buff);
 
     /* make the encrypted data */
     mpz_t bigpowmod;
@@ -64,7 +64,7 @@ void encryptPacketWithKeys(Crypto self)
     memcpy(encryptedPacket, bfr, wordcount);
 
     /* write to packet array */
-    reset_buffer(self->buff);
+    reset(self->buff);
     putUnsigned1Byte(self->buff, (unsigned char)wordcount);
     add_data(self->buff, encryptedPacket, wordcount);
 }

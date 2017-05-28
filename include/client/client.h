@@ -25,6 +25,7 @@ struct client_struct
 {
     IOStream stream;
     Crypto dencrpt;
+    pthread_t thrd;
 };
 
 #endif // CLIENT_H

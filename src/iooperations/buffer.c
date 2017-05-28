@@ -31,7 +31,7 @@ int get_used_size(IOBuffer self)
     return self->offset;
 }
 
-int reset_buffer(IOBuffer self)
+int reset(IOBuffer self)
 {
     memset(self->bfr, 0, self->offset);
     int data_len = get_used_size(self);
@@ -245,10 +245,4 @@ void putUnsigned8Bytes(IOBuffer self, unsigned long var, int endian)
         wu8b(self->bfr + self->offset, var);
         self->offset += 8;
     }
-}
-
-/* will be removed later */
-void print_buffer(IOBuffer self)
-{
-    printf("Here is the data %s\n", self->bfr);
 }

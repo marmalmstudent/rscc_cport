@@ -15,28 +15,28 @@ int main(int argc, char *argv[])
     }
     Client c = client_ctor(argv[1], (unsigned int)atoi(argv[2]));
 
-    if (c->stream->opnsock(c->stream) < 0)
+    if (openSocket(c->stream) < 0)
         error("ERROR opening socket");
-    if (c->stream->cnctsock(c->stream) < 0)
+    if (connectSock(c->stream) < 0)
         error("ERROR connecting");
 
     /* start thread, it reads from the socket */
-    c->stream->iostrm_tstart(c->stream);
+    iostrm_tstart(c->stream, &c->thrd);
 
     printf("Please enter the message: ");
-    if (c->stream->stdinread(c->stream, BUFF_SIZE) < 0)
+    if (stdinread(c->stream, 1234) < 0)
         error("ERROR reading from standard input");
 
     /* input thread should have sent message */
 
     // read from socket
-    if (c->stream->socketread(c->stream, BUFF_SIZE) < 0)
+    if (socketread(c->stream, 1234) < 0)
          error("ERROR reading from socket");
-    print_buffer(c->stream->inbuffer);
-    reset_buffer(c->stream->inbuffer);
+    print_inbuffer(c->stream);
+    reset_inbuffer(c->stream);
 
-    c->stream->clssock(c->stream);
-    pthread_join(c->stream->thrd, NULL); // wait for thread to finish
+    closeSocket(c->stream);
+    pthread_join(c->thrd, NULL); // wait for thread to finish
 
     client_dtor(c);
     return 0;

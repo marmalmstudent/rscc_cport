@@ -1,19 +1,8 @@
 #ifndef IOSTRM_H
 #define IOSTRM_H
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+
 #include <pthread.h>
-
-#include "buffer.h"
-
-#define BUFF_SIZE 5000
 
 /** Class hadling the input and output streams related to the socket */
 typedef struct iostream_struct *IOStream;
@@ -23,31 +12,26 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port);
 /** Destructor */
 void iostrm_dtor(IOStream obj);
 
-/** The IOStream declaration */
-struct iostream_struct
-{
-    int streamopen;  // condition for shutting down the thread
-    pthread_t thrd;
-    int tret;
+/** opens the current (TCP) socket with current port and address */
+int openSocket(IOStream self);
+/** closes the socket */
+int closeSocket(IOStream self);
+/** attemps to connect the socket to the port and address */
+int connectSock(IOStream self);
+/** reads len bytes of data from the standard input */
+int stdinread(IOStream self, int len);
+/** write offset bytes of data from buffer to socket */
+int socketwrite(IOStream self);
+/** read len bytes of data from socket to buffer */
+int socketread(IOStream self, int len);
+/** Thread start */
+void iostrm_tstart(IOStream self, pthread_t *thrd);
+/** resets the instream buffer */
+void reset_inbuffer(IOStream self);
+/** resets the outstream buffer */
+void reset_outbuffer(IOStream self);
 
-    int sockfd;
-    int portno;
-    int n;
-    struct sockaddr_in *serv_addr;
-    struct hostent *server;
-
-    IOBuffer inbuffer;
-    IOBuffer outbuffer;
-
-    int (* opnsock)(IOStream self);
-    int (* clssock)(IOStream self);
-    int (* cnctsock)(IOStream self);
-    int (* stdinread)(IOStream self, int len);
-    int (* socketwrite)(IOStream self);
-    int (* socketread)(IOStream self, int len);
-    void *(* iostrm_trun)(void *ptr);
-    void (* iostrm_tstart)(IOStream self);
-
-};
+/* will be removed later */
+void print_inbuffer(IOStream self);
 
 #endif // IOSTRM_H

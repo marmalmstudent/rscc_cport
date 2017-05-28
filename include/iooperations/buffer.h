@@ -12,7 +12,7 @@ void buffer_dtor(IOBuffer obj);
 /** returns the number of used slots in the buffer */
 int get_used_size(IOBuffer self);
 /** overwrites the buffer and sets last index to beginning of buffer */
-int reset_buffer(IOBuffer self);
+int reset(IOBuffer self);
 void add_data(IOBuffer self, const char *data, int len);
 /** returns the buffer starting from just after the last entered value. */
 char *get_data_end(IOBuffer self);
@@ -41,6 +41,5 @@ void putUnsigned2Bytes(IOBuffer self, unsigned short var, int endian);
 void putUnsigned4Bytes(IOBuffer self, unsigned int var, int endian);
 void putUnsigned8Bytes(IOBuffer self, unsigned long var, int endian);
 
-void print_buffer(IOBuffer self);
 
 #endif // IOBUFFER_H

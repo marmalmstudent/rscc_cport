@@ -1,25 +1,37 @@
 #include "../../include/iooperations/iostrm.h"
 
-/* private functions */
-/** opens the current (TCP) socket with current port and address */
-static int openSocket(IOStream self);
-/** closes the socket */
-static int closeSocket(IOStream self);
-/** attemps to connect the socket to the port and address */
-static int connectSock(IOStream self);
-/** reads len bytes of data from the standard input */
-static int stdinread(IOStream self, int len);
-/** write offset bytes of data from buffer to socket */
-static int socketwrite(IOStream self);
-/** read len bytes of data from socket to buffer */
-static int socketread(IOStream self, int len);
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include "../../include/iooperations/buffer.h"
+
+#define BUFF_SIZE 5000
+
+struct iostream_struct
+{
+    int streamopen;  // condition for shutting down the thread
+    int tret;
+
+    int sockfd;
+    int portno;
+    int n;
+    struct sockaddr_in *serv_addr;
+    struct hostent *server;
+
+    IOBuffer inbuffer;
+    IOBuffer outbuffer;
+};
+
 /** writes data to the iobuffer. locks the mutex during the write */
 static int write_to_buffer(IOBuffer self, char * data, int len);
-
 /** Thread control */
 static void *iostrm_trun(void *ptr);
-/** Thread start */
-static void iostrm_tstart(IOStream self);
 
 static pthread_mutex_t mutx;
 static pthread_cond_t cond;
@@ -49,16 +61,6 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     s->inbuffer = buffer_ctor(BUFF_SIZE);
     s->outbuffer = buffer_ctor(BUFF_SIZE);
 
-    /* set struct functions */
-    s->opnsock = &openSocket;
-    s->clssock = &closeSocket;
-    s->cnctsock = &connectSock;
-    s->stdinread = &stdinread;
-    s->socketwrite = &socketwrite;
-    s->socketread = &socketread;
-    /* thread functions */
-    s->iostrm_tstart = &iostrm_tstart;
-    s->iostrm_trun = &iostrm_trun;
     return s;
 }
 
@@ -71,7 +73,7 @@ void iostrm_dtor(IOStream obj)
 }
 
 /* reads len bytes of data from the standard input */
-static int stdinread(IOStream self, int len)
+int stdinread(IOStream self, int len)
 {
     int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
     char buff[read_len];
@@ -86,7 +88,7 @@ static int stdinread(IOStream self, int len)
 }
 
 /* write offset bytes of data from buffer to socket */
-static int socketwrite(IOStream self)
+int socketwrite(IOStream self)
 {
     int flag = 0;
     int buff_len = get_used_size(self->outbuffer);
@@ -95,12 +97,12 @@ static int socketwrite(IOStream self)
         flag = 1; // could not write entire buffer to socket
     else if (byteswritten < 0)
         flag = -1; // could not write any data to socket
-    reset_buffer(self->outbuffer);
+    reset(self->outbuffer);
     return flag;
 }
 
 /* read len bytes of data from socket to buffer */
-static int socketread(IOStream self, int len)
+int socketread(IOStream self, int len)
 {
     int flag = 0, len_read;
     if (len <= BUFF_SIZE)
@@ -122,7 +124,7 @@ static int socketread(IOStream self, int len)
 }
 
 /* opens the current (TCP) socket with current port and address */
-static int openSocket(IOStream self)
+int openSocket(IOStream self)
 {
     self->sockfd = socket(AF_INET, SOCK_STREAM, 0);
     bcopy((char *)self->server->h_addr, (char *)&self->serv_addr->sin_addr.s_addr,
@@ -132,7 +134,7 @@ static int openSocket(IOStream self)
 }
 
 /* closes the socket */
-static int closeSocket(IOStream self)
+int closeSocket(IOStream self)
 {
     self->streamopen = 0; // close stream
     pthread_cond_signal(&cond); // notify thread
@@ -140,18 +142,18 @@ static int closeSocket(IOStream self)
 }
 
 /* attemps to connect the socket to the port and address */
-static int connectSock(IOStream self)
+int connectSock(IOStream self)
 {
     return connect(self->sockfd, (struct sockaddr *)self->serv_addr,
                    sizeof(struct sockaddr_in));
 }
 
 /* start the thread */
-static void iostrm_tstart(IOStream self)
+void iostrm_tstart(IOStream self, pthread_t *thrd)
 {
     self->streamopen = 1;
-    self->tret = pthread_create(&self->thrd, NULL,
-                                self->iostrm_trun, (void *)self);
+    self->tret = pthread_create(thrd, NULL,
+                                iostrm_trun, (void *)self);
 }
 
 /* run the thread */
@@ -165,7 +167,7 @@ static void *iostrm_trun(void *ptr)
             pthread_cond_wait(&cond, &mutx);
         pthread_mutex_unlock(&mutx); // end of synchronize block in java
         if (self->streamopen)
-            if (self->socketwrite(self) < 0)
+            if (socketwrite(self) < 0)
                 fprintf(stderr, "ERROR writing to socket");
     }
     return NULL;
@@ -182,4 +184,20 @@ static int write_to_buffer(IOBuffer bfr, char * data, int len)
     pthread_mutex_unlock(&mutx); // unlock
     pthread_cond_signal(&cond); // notify thread
     return 1;
+}
+/** resets the instream buffer */
+void reset_inbuffer(IOStream self)
+{
+    reset(self->inbuffer);
+}
+/** resets the outstream buffer */
+void reset_outbuffer(IOStream self)
+{
+    reset(self->outbuffer);
+}
+
+/* will be removed later */
+void print_inbuffer(IOStream self)
+{
+    printf("%s\n", get_data(self->inbuffer));
 }

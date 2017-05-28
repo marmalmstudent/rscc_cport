@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
     // read from socket
     if (c->stream->socketread(c->stream, BUFF_SIZE) < 0)
          error("ERROR reading from socket");
-    printf("%s\n", c->stream->inbuffer->bfr);
+    print_buffer(c->stream->inbuffer);
+    reset_buffer(c->stream->inbuffer);
 
     c->stream->clssock(c->stream);
     pthread_join(c->stream->thrd, NULL); // wait for thread to finish

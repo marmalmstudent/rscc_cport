@@ -42,10 +42,9 @@ static void getCryptoVal(mpz_t cryptoval, const char *arr)
 void encryptPacketWithKeys(Crypto self)
 {
     /* copy data to packade of smallest required length */
-    int i = self->buff->offset;
-    self->buff->offset = 0;
-    char dummyPackage[i];
-    memcpy(dummyPackage, self->buff->bfr + self->buff->offset, i);
+    char dummyPackage[get_used_size(self->buff)];
+    copy_data(self->buff, dummyPackage);
+    reset_buffer(self->buff);
 
     /* make the encrypted data */
     mpz_t bigpowmod;
@@ -60,8 +59,7 @@ void encryptPacketWithKeys(Crypto self)
     memcpy(encryptedPacket, bfr, wordcount);
 
     /* write to packet array */
-    self->buff->offset = 0;
-    wu1b(self->buff->bfr + self->buff->offset++, (unsigned char)wordcount);
-    memcpy(self->buff->bfr + self->buff->offset, encryptedPacket, wordcount);
-    self->buff->offset += wordcount;
+    reset_buffer(self->buff);
+    putUnsigned1Byte(self->buff, (unsigned char)wordcount);
+    add_data(self->buff, encryptedPacket, wordcount);
 }

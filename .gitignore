@@ -1,4 +1,5 @@
 bin/
 obj/
+local/
 rscclient.layout
 rscclient.depend

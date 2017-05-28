@@ -10,10 +10,6 @@ Crypto crypto_ctor();
 /** Destructor */
 void crypto_dtor(Crypto obj);
 
-struct crypto_struct
-{
-    IOBuffer buff;
-};
 void encryptPacketWithKeys(Crypto self);
 
 #endif // CRYPTO_H

@@ -6,6 +6,11 @@
 
 #include "../../include/dataoperations/intops.h"
 
+struct crypto_struct
+{
+    IOBuffer buff;
+};
+
 static mpz_t encrptkey, encrptmod;
 static void initCryptoVals()
 {

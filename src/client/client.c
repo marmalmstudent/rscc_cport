@@ -1,5 +1,20 @@
 #include "../../include/client/client.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+
+#include "../../include/iooperations/iostrm.h"
+#include "../../include/iooperations/crypto.h"
+
+struct client_struct
+{
+    IOStream stream;
+    Crypto dencrpt;
+    pthread_t thrd;
+};
+
 void error(const char *msg)
 {
     fprintf(stderr, msg);

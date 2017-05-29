@@ -67,8 +67,11 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
 void iostrm_dtor(IOStream obj)
 {
     buffer_dtor(obj->inbuffer);
+    obj->inbuffer = NULL;
     buffer_dtor(obj->outbuffer);
+    obj->outbuffer = NULL;
     free(obj->serv_addr);
+    obj->serv_addr = NULL;
     free(obj);
 }
 

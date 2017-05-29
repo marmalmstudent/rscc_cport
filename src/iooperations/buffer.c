@@ -22,6 +22,7 @@ IOBuffer buffer_ctor(int bsize)
 void buffer_dtor(IOBuffer obj)
 {
     free(obj->bfr);
+    obj->bfr = NULL;
     free(obj);
 }
 

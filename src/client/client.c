@@ -68,6 +68,8 @@ Client client_ctor(const char * hostname, unsigned int port)
 void client_dtor(Client obj)
 {
     iostrm_dtor(obj->stream);
+    obj->stream = NULL;
     crypto_dtor(obj->dencrpt);
+    obj->dencrpt = NULL;
     free(obj);
 }

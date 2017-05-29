@@ -36,6 +36,7 @@
 			<Add option="-lgmp" />
 		</Linker>
 		<Unit filename="include/client/client.h" />
+		<Unit filename="include/client/packetconstruct.h" />
 		<Unit filename="include/dataoperations/floatops.h" />
 		<Unit filename="include/dataoperations/intops.h" />
 		<Unit filename="include/dataoperations/strops.h" />
@@ -43,6 +44,9 @@
 		<Unit filename="include/iooperations/crypto.h" />
 		<Unit filename="include/iooperations/iostrm.h" />
 		<Unit filename="src/client/client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/client/packetconstruct.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/dataoperations/floatops.c">

@@ -40,8 +40,10 @@ int main(int argc, char *argv[])
     /* start thread, it reads from the socket */
     iostrm_tstart(c->stream, &c->thrd);
 
-    makeSessionPacket(c->pkt_out, "admindsa");
+    /* for testing. trying to see if the enctryption and packet part works */
+    makeSessionPacket(c->pkt_out, "admin");
     write_data_to_buffer(c->stream, getPacketData(c->pkt_out), getPacketDataLen(c->pkt_out));
+    /* EOF */
 
     printf("Please enter the message: ");
     if (stdinread(c->stream, 1234) < 0)

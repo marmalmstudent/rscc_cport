@@ -11,6 +11,14 @@ IOBuffer buffer_ctor(int len);
 void buffer_dtor(IOBuffer obj);
 /** returns the number of used slots in the buffer */
 int get_used_size(IOBuffer self);
+/** moves the buffer offset forward steps steps and saves the offset
+    and length for later use by calling pop_steps. */
+int push_step(IOBuffer self, int steps);
+/** writes len bytes from data to buffer where the offset were before
+    push_step was called.*/
+int pop_step(IOBuffer self, const char *data, int len);
+/** discards the allocaded space in the buffer created by push_step. */
+void reset_step(IOBuffer self);
 /** overwrites the buffer and sets last index to beginning of buffer */
 int reset(IOBuffer self);
 void add_data(IOBuffer self, const char *data, int len);

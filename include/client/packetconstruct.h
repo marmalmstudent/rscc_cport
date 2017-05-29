@@ -11,4 +11,7 @@ typedef struct pktcnstr *PacketConstruct;
 PacketConstruct pktcnstr_ctor();
 void pktcnstr_dtor(PacketConstruct obj);
 
+/** creates a packet that asks the server if it is available */
+void makeSessionPacket(PacketConstruct self, const char *chrname);
+
 #endif // PACKETCONSTRUCT_H

@@ -5,10 +5,17 @@
 #include <string.h>
 #include "../../include/dataoperations/intops.h"
 
+struct step_struct
+{
+    int offset; /* the beginning of the allocaded space */
+    int len; /* the size of the allocated space */
+};
+
 struct buffer_struct
 {
     char *bfr;
     int offset;
+    struct step_struct header;
 };
 
 IOBuffer buffer_ctor(int bsize)
@@ -16,6 +23,7 @@ IOBuffer buffer_ctor(int bsize)
     IOBuffer b = (IOBuffer)malloc(sizeof(struct buffer_struct));
     b->bfr = (char *)calloc(bsize, sizeof(char));
     b->offset = 0;
+    b->header.offset = -1;
     return b;
 }
 
@@ -29,6 +37,39 @@ void buffer_dtor(IOBuffer obj)
 int get_used_size(IOBuffer self)
 {
     return self->offset;
+}
+
+int push_step(IOBuffer self, int steps)
+{
+    if (self->header.offset >= 0) /* previously allocated memory exists */
+        return -1;
+    self->header.offset = self->offset;
+    self->header.len = steps;
+    self->offset += steps;
+    return 1;
+}
+
+int pop_step(IOBuffer self, const char *data, int len)
+{
+    if (self->header.offset < 0 /* push_step has not preceded call to pop_step */
+            || self->header.len < len)
+        return -1;
+
+    /* add data to allocated part of buffer */
+    int tmp = self->offset;
+    self->offset = self->header.offset;
+    add_data(self, data, len);
+    self->offset = tmp;
+
+    /* update allocated memory */
+    self->header.offset += len;
+    self->header.len -= len;
+}
+
+void reset_step(IOBuffer self)
+{
+    self->header.offset = -1;
+    self->header.len = 0;
 }
 
 int reset(IOBuffer self)

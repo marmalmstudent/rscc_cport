@@ -44,7 +44,7 @@ void addCharacters(const char *src, char *dst, int len)
     }
 }
 
-long stringLength12ToLong(char *src)
+long stringLength12ToLong(const char *src)
 {
     int s = skipLeadingNonChars(src);
     int e = skipTrailingNonChars(src);

@@ -14,4 +14,9 @@ void pktcnstr_dtor(PacketConstruct obj);
 /** creates a packet that asks the server if it is available */
 void makeSessionPacket(PacketConstruct self, const char *chrname);
 
+/** returns the length of the packet */
+int getPacketDataLen(PacketConstruct self);
+/** returns a pointer to the beginning of the packet data */
+const char *getPacketData(PacketConstruct self);
+
 #endif // PACKETCONSTRUCT_H

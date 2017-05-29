@@ -71,3 +71,13 @@ void makeSessionPacket(PacketConstruct self, const char *chrname)
     /* add packet length to data */
     formatPacket(self);
 }
+
+int getPacketDataLen(PacketConstruct self)
+{
+    return get_used_size(self->buff);
+}
+
+const char *getPacketData(PacketConstruct self)
+{
+    return get_data(self->buff);
+}

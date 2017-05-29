@@ -83,7 +83,6 @@ int stdinread(IOStream self, int len)
     char * tmp = fgets(buff, read_len, stdin);
     if (tmp != NULL)
     {
-        add_data(self->outbuffer, buff, strlen(buff));
         write_to_buffer(self->outbuffer, tmp, strlen(tmp));
         return 1;
     }
@@ -203,4 +202,8 @@ void reset_outbuffer(IOStream self)
 void print_inbuffer(IOStream self)
 {
     printf("%s\n", get_data(self->inbuffer));
+}
+void write_data_to_buffer(IOStream self, const char *data, int len)
+{
+    add_data(self->outbuffer, data, len);
 }

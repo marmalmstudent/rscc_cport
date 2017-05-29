@@ -33,5 +33,6 @@ void reset_outbuffer(IOStream self);
 
 /* will be removed later */
 void print_inbuffer(IOStream self);
+void write_data_to_buffer(IOStream self, const char *data, int len);
 
 #endif // IOSTRM_H

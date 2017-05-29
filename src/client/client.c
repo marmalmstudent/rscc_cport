@@ -7,11 +7,13 @@
 
 #include "../../include/iooperations/iostrm.h"
 #include "../../include/iooperations/crypto.h"
+#include "../../include/client/packetconstruct.h"
 
 struct client_struct
 {
     IOStream stream;
     Crypto dencrpt;
+    PacketConstruct pkt_out;
     pthread_t thrd;
 };
 
@@ -38,9 +40,13 @@ int main(int argc, char *argv[])
     /* start thread, it reads from the socket */
     iostrm_tstart(c->stream, &c->thrd);
 
+    makeSessionPacket(c->pkt_out, "admindsa");
+    write_data_to_buffer(c->stream, getPacketData(c->pkt_out), getPacketDataLen(c->pkt_out));
+
     printf("Please enter the message: ");
     if (stdinread(c->stream, 1234) < 0)
         error("ERROR reading from standard input");
+
 
     /* input thread should have sent message */
 
@@ -62,6 +68,7 @@ Client client_ctor(const char * hostname, unsigned int port)
     Client c = (Client)malloc(sizeof(struct client_struct));
     c->stream = iostrm_ctor(hostname, port);
     c->dencrpt = crypto_ctor();
+    c->pkt_out = pktcnstr_ctor();
     return c;
 }
 
@@ -71,5 +78,7 @@ void client_dtor(Client obj)
     obj->stream = NULL;
     crypto_dtor(obj->dencrpt);
     obj->dencrpt = NULL;
+    pktcnstr_dtor(obj->pkt_out);
+    obj->pkt_out = NULL;
     free(obj);
 }

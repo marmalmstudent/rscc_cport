@@ -46,8 +46,7 @@ int main(int argc, char *argv[])
     iostrm_tstart(c->stream, &c->thrd);
 
     /* for testing. trying to see if the enctryption and packet part works */
-    makeSessionPacket(c->pkt_out, "admin");
-    put_data(c->outbuffer, getPacketData(c->pkt_out), getPacketDataLen(c->pkt_out));
+    makeSessionPacket(c->pkt_out, c->outbuffer, "admin");
     /* EOF */
 
     printf("Please enter the message: ");

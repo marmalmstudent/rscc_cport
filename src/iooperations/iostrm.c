@@ -12,7 +12,11 @@
 #include "../../include/iooperations/buffer.h"
 
 #define BUFF_SIZE 5000
-
+struct bfr
+{
+    char *data;
+    int offset;
+};
 struct iostream_struct
 {
     int streamopen;  // condition for shutting down the thread
@@ -24,14 +28,17 @@ struct iostream_struct
     struct sockaddr_in *serv_addr;
     struct hostent *server;
 
-    IOBuffer inbuffer;
-    IOBuffer outbuffer;
+    struct bfr bfr_in; // where data from the socket is put
+    struct bfr bfr_out; // where data to the socket is put
 };
 
-/** writes data to the iobuffer. locks the mutex during the write */
-static int write_to_buffer(IOBuffer self, char * data, int len);
 /** Thread control */
 static void *iostrm_trun(void *ptr);
+
+/** writes src data to b's buffer */
+static void bfr_add_data(struct bfr *b, const IOBuffer src);
+/** resets the buffer offset to zero and overwrites data with zeros */
+static void bfr_reset(struct bfr *b);
 
 static pthread_mutex_t mutx;
 static pthread_cond_t cond;
@@ -58,48 +65,51 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     s->serv_addr->sin_port = htons(s->portno);
 
     /* in and out streams */
-    s->inbuffer = buffer_ctor(BUFF_SIZE);
-    s->outbuffer = buffer_ctor(BUFF_SIZE);
+    s->bfr_in.data = (char *)calloc(BUFF_SIZE, sizeof(char));
+    s->bfr_in.offset = 0;
+    s->bfr_out.data = (char *)calloc(BUFF_SIZE, sizeof(char));
+    s->bfr_out.offset = 0;
 
     return s;
 }
 
 void iostrm_dtor(IOStream obj)
 {
-    buffer_dtor(obj->inbuffer);
-    obj->inbuffer = NULL;
-    buffer_dtor(obj->outbuffer);
-    obj->outbuffer = NULL;
     free(obj->serv_addr);
     obj->serv_addr = NULL;
+
+    free(obj->bfr_in.data);
+    obj->bfr_in.data = NULL;
+    free(obj->bfr_out.data);
+    obj->bfr_out.data = NULL;
     free(obj);
+    obj = NULL;
 }
 
-/* reads len bytes of data from the standard input */
-int stdinread(IOStream self, int len)
+static void bfr_add_data(struct bfr *b, const IOBuffer src)
 {
-    int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
-    char buff[read_len];
-    char * tmp = fgets(buff, read_len, stdin);
-    if (tmp != NULL)
-    {
-        write_to_buffer(self->outbuffer, tmp, strlen(tmp));
-        return 1;
-    }
-    return -1;
+    copy_data(src, b->data);
+    b->offset += get_used_size(src);
+}
+
+static void bfr_reset(struct bfr *b)
+{
+    memset(b->data, 0, b->offset);
+    b->offset = 0;
 }
 
 /* write offset bytes of data from buffer to socket */
 int socketwrite(IOStream self)
 {
     int flag = 0;
-    int buff_len = get_used_size(self->outbuffer);
-    int byteswritten = write(self->sockfd, get_data(self->outbuffer), buff_len);
+    int buff_len = self->bfr_out.offset;
+    int byteswritten = write(
+            self->sockfd, self->bfr_out.data, buff_len);
+    bfr_reset(&self->bfr_out);
     if (byteswritten != buff_len)
         flag = 1; // could not write entire buffer to socket
     else if (byteswritten < 0)
         flag = -1; // could not write any data to socket
-    reset(self->outbuffer);
     return flag;
 }
 
@@ -112,13 +122,16 @@ int socketread(IOStream self, int len)
     else
     {
         len_read = BUFF_SIZE;
-        flag = 2; // buffer size not big enough
+        flag |= 2; // buffer size not big enough
     }
-    int bytesread = read(self->sockfd, get_data(self->inbuffer), len_read);
+    int bytesread = read(self->sockfd,
+                         self->bfr_in.data + self->bfr_in.offset,
+                         len_read);
     if (bytesread >= 0)
     {
         if (bytesread != len_read)
             flag |= 1; // could not read all data
+        self->bfr_in.offset += bytesread;
     }
     else
         flag = -1; // an error occured
@@ -165,7 +178,7 @@ static void *iostrm_trun(void *ptr)
     while(self->streamopen)
     {
         pthread_mutex_lock(&mutx); // start of synchronize block in java
-        if (get_used_size(self->outbuffer) == 0)
+        if (self->bfr_out.offset == 0)
             pthread_cond_wait(&cond, &mutx);
         pthread_mutex_unlock(&mutx); // end of synchronize block in java
         if (self->streamopen)
@@ -175,35 +188,17 @@ static void *iostrm_trun(void *ptr)
     return NULL;
 }
 
-/* writes len bytes from data to buffer */
-static int write_to_buffer(IOBuffer bfr, char * data, int len)
-{
-    if (len > BUFF_SIZE - get_used_size(bfr))
-        return -1; // buffer overflow
-    pthread_mutex_lock(&mutx); // lock to this thread
-    add_data(bfr, data, len);
 
+void put_bfr_out(IOStream self, const IOBuffer src)
+{
+    pthread_mutex_lock(&mutx); // lock to this thread
+    bfr_add_data(&self->bfr_out, src);
     pthread_mutex_unlock(&mutx); // unlock
     pthread_cond_signal(&cond); // notify thread
-    return 1;
-}
-/** resets the instream buffer */
-void reset_inbuffer(IOStream self)
-{
-    reset(self->inbuffer);
-}
-/** resets the outstream buffer */
-void reset_outbuffer(IOStream self)
-{
-    reset(self->outbuffer);
 }
 
-/* will be removed later */
-void print_inbuffer(IOStream self)
+void get_bfr_in(IOStream self, IOBuffer dst)
 {
-    printf("%s\n", get_data(self->inbuffer));
-}
-void write_data_to_buffer(IOStream self, const char *data, int len)
-{
-    add_data(self->outbuffer, data, len);
+    put_data(dst, self->bfr_in.data, self->bfr_in.offset);
+    bfr_reset(&self->bfr_in);
 }

@@ -9,8 +9,7 @@ typedef struct buffer_struct *IOBuffer;
 IOBuffer buffer_ctor(int len);
 /** Destructor */
 void buffer_dtor(IOBuffer obj);
-/** returns the number of used slots in the buffer */
-int get_used_size(IOBuffer self);
+
 /** moves the buffer offset forward steps steps and saves the offset
     and length for later use by calling pop_steps. */
 int push_step(IOBuffer self, int steps);
@@ -21,13 +20,21 @@ int pop_step(IOBuffer self, const char *data, int len);
 void reset_step(IOBuffer self);
 /** overwrites the buffer and sets last index to beginning of buffer */
 int reset(IOBuffer self);
-void add_data(IOBuffer self, const char *data, int len);
+
+/** returns the number of used slots in the buffer */
+int get_used_size(const IOBuffer self);
+/** copies len entries of buffer data from src to dst */
+void bfr_cpy(const IOBuffer src, IOBuffer dst, int len);
+
+/** adds len bytes from data to this buffer */
+void put_data(IOBuffer self, const char *data, int len);
+/** copies the contents of the buffer to dst. */
+char *copy_data(const IOBuffer self, char *dst);
+
 /** returns the buffer starting from just after the last entered value. */
 char *get_data_end(IOBuffer self);
 /** returns the buffer starting from the beginning. */
-char *get_data(IOBuffer self);
-/** copies the contents of the buffer to dst. */
-void copy_data(IOBuffer self, char *dst);
+//char *get_data(IOBuffer self);
 
 char getSigned1Byte(IOBuffer self);
 short getSigned2Bytes(IOBuffer self, int endian);

@@ -9,12 +9,17 @@
 #include "../../include/iooperations/crypto.h"
 #include "../../include/client/packetconstruct.h"
 
+#define BUFF_SIZE 5000
+
 struct client_struct
 {
     IOStream stream;
     Crypto dencrpt;
     PacketConstruct pkt_out;
     pthread_t thrd;
+
+    IOBuffer inbuffer;
+    IOBuffer outbuffer;
 };
 
 void error(const char *msg)
@@ -42,12 +47,13 @@ int main(int argc, char *argv[])
 
     /* for testing. trying to see if the enctryption and packet part works */
     makeSessionPacket(c->pkt_out, "admin");
-    write_data_to_buffer(c->stream, getPacketData(c->pkt_out), getPacketDataLen(c->pkt_out));
+    put_data(c->outbuffer, getPacketData(c->pkt_out), getPacketDataLen(c->pkt_out));
     /* EOF */
 
     printf("Please enter the message: ");
-    if (stdinread(c->stream, 1234) < 0)
+    if (stdinread(c, 1234) < 0)
         error("ERROR reading from standard input");
+    put_bfr_out(c->stream, c->outbuffer);
 
 
     /* input thread should have sent message */
@@ -55,8 +61,11 @@ int main(int argc, char *argv[])
     // read from socket
     if (socketread(c->stream, 1234) < 0)
          error("ERROR reading from socket");
-    print_inbuffer(c->stream);
-    reset_inbuffer(c->stream);
+    get_bfr_in(c->stream, c->inbuffer);
+    char print_dat[get_used_size(c->inbuffer)+1];
+    copy_data(c->inbuffer, print_dat);
+    print_dat[get_used_size(c->inbuffer)] = 0;
+    printf("%s\n", print_dat);
 
     closeSocket(c->stream);
     pthread_join(c->thrd, NULL); // wait for thread to finish
@@ -71,16 +80,32 @@ Client client_ctor(const char * hostname, unsigned int port)
     c->stream = iostrm_ctor(hostname, port);
     c->dencrpt = crypto_ctor();
     c->pkt_out = pktcnstr_ctor();
+    c->inbuffer = buffer_ctor(BUFF_SIZE);
+    c->outbuffer = buffer_ctor(BUFF_SIZE);
     return c;
 }
 
 void client_dtor(Client obj)
 {
     iostrm_dtor(obj->stream);
-    obj->stream = NULL;
     crypto_dtor(obj->dencrpt);
-    obj->dencrpt = NULL;
     pktcnstr_dtor(obj->pkt_out);
-    obj->pkt_out = NULL;
+    buffer_dtor(obj->inbuffer);
+    buffer_dtor(obj->outbuffer);
     free(obj);
+    obj = NULL;
+}
+
+/* reads len bytes of data from the standard input */
+int stdinread(Client self, int len)
+{
+    int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
+    char buff[read_len];
+    char * tmp = fgets(buff, read_len, stdin);
+    if (tmp != NULL)
+    {
+        put_data(self->outbuffer, tmp, strlen(tmp));
+        return 1;
+    }
+    return -1;
 }

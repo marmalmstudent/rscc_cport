@@ -32,9 +32,10 @@ void buffer_dtor(IOBuffer obj)
     free(obj->bfr);
     obj->bfr = NULL;
     free(obj);
+    obj = NULL;
 }
 
-int get_used_size(IOBuffer self)
+int get_used_size(const IOBuffer self)
 {
     return self->offset;
 }
@@ -58,12 +59,13 @@ int pop_step(IOBuffer self, const char *data, int len)
     /* add data to allocated part of buffer */
     int tmp = self->offset;
     self->offset = self->header.offset;
-    add_data(self, data, len);
+    put_data(self, data, len);
     self->offset = tmp;
 
     /* update allocated memory */
     self->header.offset += len;
     self->header.len -= len;
+    return 1;
 }
 
 void reset_step(IOBuffer self)
@@ -80,23 +82,29 @@ int reset(IOBuffer self)
     return data_len;
 }
 
-void add_data(IOBuffer self, const char *data, int len)
+void bfr_cpy(const IOBuffer src, IOBuffer dst, int len)
+{
+    memcpy(dst->bfr + dst->offset, src->bfr, len);
+}
+
+void put_data(IOBuffer self, const char *data, int len)
 {
     memcpy(self->bfr + self->offset, data, len);
     self->offset += len;
 }
+char *copy_data(const IOBuffer self, char *dst)
+{
+    memcpy(dst, self->bfr, self->offset);
+    return dst;
+}
 
-char *get_data_end(IOBuffer self)
+char *get_datah_end(IOBuffer self)
 {
     return self->bfr + self->offset;
 }
 char *get_data(IOBuffer self)
 {
     return self->bfr;
-}
-void copy_data(IOBuffer self, char *dst)
-{
-    memcpy(dst, self->bfr, self->offset);
 }
 
 

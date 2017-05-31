@@ -32,8 +32,8 @@ void crypto_dtor(Crypto obj)
     mpz_clear(encrptkey);
     mpz_clear(encrptmod);
     buffer_dtor(obj->buff);
-    obj->buff = NULL;
     free(obj);
+    obj = NULL;
 }
 
 static void getCryptoVal(mpz_t cryptoval, const char *arr)
@@ -78,5 +78,5 @@ void encryptPacketWithKeys(Crypto self)
     /* write to packet array */
     reset(self->buff);
     putUnsigned1Byte(self->buff, (unsigned char)wordcount);
-    add_data(self->buff, encryptedPacket, wordcount);
+    put_data(self->buff, encryptedPacket, wordcount);
 }

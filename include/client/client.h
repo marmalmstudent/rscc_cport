@@ -11,5 +11,7 @@ Client client_ctor(const char * hostname, unsigned int port);
 /** Destructor */
 void client_dtor(Client obj);
 
+/** reads len bytes of data from the standard input */
+int stdinread(Client self, int len);
 
 #endif // CLIENT_H

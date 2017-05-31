@@ -3,6 +3,7 @@
 
 
 #include <pthread.h>
+#include "buffer.h"
 
 /** Class hadling the input and output streams related to the socket */
 typedef struct iostream_struct *IOStream;
@@ -18,21 +19,16 @@ int openSocket(IOStream self);
 int closeSocket(IOStream self);
 /** attemps to connect the socket to the port and address */
 int connectSock(IOStream self);
-/** reads len bytes of data from the standard input */
-int stdinread(IOStream self, int len);
 /** write offset bytes of data from buffer to socket */
 int socketwrite(IOStream self);
 /** read len bytes of data from socket to buffer */
 int socketread(IOStream self, int len);
 /** Thread start */
 void iostrm_tstart(IOStream self, pthread_t *thrd);
-/** resets the instream buffer */
-void reset_inbuffer(IOStream self);
-/** resets the outstream buffer */
-void reset_outbuffer(IOStream self);
 
-/* will be removed later */
-void print_inbuffer(IOStream self);
-void write_data_to_buffer(IOStream self, const char *data, int len);
+/** copies data from input buffer to dst */
+void get_bfr_in(IOStream self, IOBuffer dst);
+/** writes data to the iobuffer. locks the mutex during the write */
+void put_bfr_out(IOStream self, IOBuffer src);
 
 #endif // IOSTRM_H

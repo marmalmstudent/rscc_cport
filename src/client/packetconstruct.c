@@ -34,8 +34,8 @@ PacketConstruct pktcnstr_ctor()
 void pktcnstr_dtor(PacketConstruct obj)
 {
     buffer_dtor(obj->buff);
-    obj->buff = NULL;
     free(obj);
+    obj = NULL;
 }
 
 static int createPacket(PacketConstruct self, int packet_id)
@@ -67,7 +67,7 @@ void makeSessionPacket(PacketConstruct self, const char *chrname)
     long l = stringLength12ToLong(chrname);
     putUnsigned1Byte(self->buff, (unsigned char) (l >> 16 & 31L));
     char *classname = "CLIENT.MUDCLIENT";
-    add_data(self->buff, classname, strlen(classname));
+    put_data(self->buff, classname, strlen(classname));
     /* add packet length to data */
     formatPacket(self);
 }

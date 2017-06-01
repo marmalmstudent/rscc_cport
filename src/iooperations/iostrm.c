@@ -12,19 +12,21 @@
 #include "../../include/iooperations/buffer.h"
 
 #define BUFF_SIZE 5000
+
 struct bfr
 {
     char *data;
     int offset;
 };
+
 struct iostream_struct
 {
-    int streamopen;  // condition for shutting down the thread
-    int tret;
+    int streamopen; // condition for shutting down the thread
+    int tret;       // thread return valus
 
-    int sockfd;
+    int sockfd;     // file descriptor
     int portno;
-    int n;
+
     struct sockaddr_in *serv_addr;
     struct hostent *server;
 
@@ -36,7 +38,7 @@ struct iostream_struct
 static void *iostrm_trun(void *ptr);
 
 /** writes src data to b's buffer */
-static void bfr_add_data(struct bfr *b, const IOBuffer src);
+static void bfr_add(struct bfr *b, const IOBuffer src);
 /** resets the buffer offset to zero and overwrites data with zeros */
 static void bfr_reset(struct bfr *b);
 
@@ -48,8 +50,7 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
     IOStream s = (IOStream)malloc(sizeof(struct iostream_struct));
 
     /* socket addres */
-    s->serv_addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-    memset((char *) s->serv_addr, 0, sizeof(struct sockaddr_in));
+    s->serv_addr = (struct sockaddr_in *)calloc(1, sizeof(struct sockaddr_in));
     s->serv_addr->sin_family = AF_INET;
 
     /* Port nad hostname */
@@ -60,9 +61,9 @@ IOStream iostrm_ctor(const char * hostname, unsigned int port)
         fprintf(stderr, "ERROR no such host %s\n", hostname);
         exit(0);
     }
-    bcopy((char *)s->server->h_addr, (char *)&s->serv_addr->sin_addr.s_addr,
-         s->server->h_length);
-    s->serv_addr->sin_port = htons(s->portno);
+    memcpy((char *)&s->serv_addr->sin_addr.s_addr,
+           (char *)s->server->h_addr, s->server->h_length);
+    s->serv_addr->sin_port = htons(s->portno); // host to network short
 
     /* in and out streams */
     s->bfr_in.data = (char *)calloc(BUFF_SIZE, sizeof(char));
@@ -86,10 +87,10 @@ void iostrm_dtor(IOStream obj)
     obj = NULL;
 }
 
-static void bfr_add_data(struct bfr *b, const IOBuffer src)
+static void bfr_add(struct bfr *b, const IOBuffer src)
 {
-    copy_data(src, b->data);
-    b->offset += get_used_size(src);
+    get_data(src, b->data);
+    b->offset += get_used(src);
 }
 
 static void bfr_reset(struct bfr *b)
@@ -124,9 +125,8 @@ int socketread(IOStream self, int len)
         len_read = BUFF_SIZE;
         flag |= 2; // buffer size not big enough
     }
-    int bytesread = read(self->sockfd,
-                         self->bfr_in.data + self->bfr_in.offset,
-                         len_read);
+    int bytesread = read(
+            self->sockfd, self->bfr_in.data + self->bfr_in.offset, len_read);
     if (bytesread >= 0)
     {
         if (bytesread != len_read)
@@ -192,7 +192,7 @@ static void *iostrm_trun(void *ptr)
 void put_bfr_out(IOStream self, const IOBuffer src)
 {
     pthread_mutex_lock(&mutx); // lock to this thread
-    bfr_add_data(&self->bfr_out, src);
+    bfr_add(&self->bfr_out, src);
     pthread_mutex_unlock(&mutx); // unlock
     pthread_cond_signal(&cond); // notify thread
 }

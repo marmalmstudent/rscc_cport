@@ -28,6 +28,9 @@ void error(const char *msg)
     exit(0);
 }
 
+/** prints the contents of the input buffer */
+static void print_server_response(Client c);
+
 int main(int argc, char *argv[])
 {
     if (argc < 3)
@@ -42,29 +45,25 @@ int main(int argc, char *argv[])
     if (connectSock(c->stream) < 0)
         error("ERROR connecting");
 
-    /* start thread, it reads from the socket */
+    /* start thread, it writes to the socket */
     iostrm_tstart(c->stream, &c->thrd);
 
-    /* for testing. trying to see if the enctryption and packet part works */
+    /* for testing. trying to see if the enctryption and
+       packet part works */
     makeSessionPacket(c->pkt_out, c->outbuffer, "admin");
-    /* EOF */
 
     printf("Please enter the message: ");
     if (stdinread(c, 1234) < 0)
         error("ERROR reading from standard input");
+    /* write output buffer to sream output buffer.
+       the output thread should send the message. */
     put_bfr_out(c->stream, c->outbuffer);
-
-
-    /* input thread should have sent message */
 
     // read from socket
     if (socketread(c->stream, 1234) < 0)
          error("ERROR reading from socket");
     get_bfr_in(c->stream, c->inbuffer);
-    char print_dat[get_used_size(c->inbuffer)+1];
-    copy_data(c->inbuffer, print_dat);
-    print_dat[get_used_size(c->inbuffer)] = 0;
-    printf("%s\n", print_dat);
+    print_server_response(c);
 
     closeSocket(c->stream);
     pthread_join(c->thrd, NULL); // wait for thread to finish
@@ -93,6 +92,14 @@ void client_dtor(Client obj)
     buffer_dtor(obj->outbuffer);
     free(obj);
     obj = NULL;
+}
+
+static void print_server_response(Client c)
+{
+    char print_dat[get_used(c->inbuffer)+1];
+    get_data(c->inbuffer, print_dat);
+    print_dat[get_used(c->inbuffer)] = 0;
+    printf("%s\n", print_dat);
 }
 
 /* reads len bytes of data from the standard input */

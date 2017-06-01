@@ -58,8 +58,8 @@ static void initCryptoVals()
 void encryptPacketWithKeys(Crypto self)
 {
     /* copy data to package of smallest required length */
-    char dummyPackage[get_used_size(self->buff)];
-    copy_data(self->buff, dummyPackage);
+    char dummyPackage[get_used(self->buff)];
+    get_data(self->buff, dummyPackage);
     reset(self->buff);
 
     /* make the encrypted data */
@@ -77,6 +77,6 @@ void encryptPacketWithKeys(Crypto self)
 
     /* write to packet array */
     reset(self->buff);
-    putUnsigned1Byte(self->buff, (unsigned char)wordcount);
+    put_1_byte(self->buff, (unsigned char)wordcount);
     put_data(self->buff, encryptedPacket, wordcount);
 }

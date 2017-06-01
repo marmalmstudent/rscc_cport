@@ -27,7 +27,8 @@ short rs2b(char *src)
 {
     union s2b_uni uni;
     memcpy(uni.c, src, sizeof(short));
-    return uni.i;
+
+    return  uni.i;
 }
 unsigned short ru2b(char *src)
 {

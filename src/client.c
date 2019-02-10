@@ -18,7 +18,7 @@ static double drand() {
 bool client_ctor(struct rsc_client *client, char const *hostname, uint16_t port)
 {
   client->stream = iostrm_ctor(hostname, port);
-  client->dencrpt = crypto_ctor();
+  crypto_ctor(&client->dencrpt);
   client->pkt_out = pktcnstr_ctor();
   client->inbuffer = buffer_ctor(BUFF_SIZE);
   client->outbuffer = buffer_ctor(BUFF_SIZE);
@@ -28,7 +28,7 @@ bool client_ctor(struct rsc_client *client, char const *hostname, uint16_t port)
 void client_dtor(struct rsc_client *client)
 {
   iostrm_dtor(client->stream);
-  crypto_dtor(client->dencrpt);
+  crypto_dtor(&client->dencrpt);
   pktcnstr_dtor(client->pkt_out);
   buffer_dtor(client->inbuffer);
   buffer_dtor(client->outbuffer);
@@ -39,7 +39,7 @@ login(struct rsc_client *client)
 {
   char username[21];
   memset(username, 0, 21);
-  sprintf(username, "%s", "user");
+  sprintf(username, "%s", "usernamn");
   char password[21];
   memset(password, 0, 21);
   sprintf(password, "%s", "password");
@@ -66,24 +66,25 @@ login(struct rsc_client *client)
   uint64_t sessionID = get_8_bytes(client->inbuffer, endian_big);
   reset(client->inbuffer);
   if (sessionID == 0) {
-    printf("Login server offline.\nPlease try again in a few mins\n");
+    printf("Login server offline.\n"
+	   "Please try again in a few mins\n");
     return 0;
   }
   printf("Session ID: %lu\n", sessionID);
 
-  put_4_bytes(client->dencrpt->buff, (int32_t) (drand() * 99999999), endian_big);
-  put_4_bytes(client->dencrpt->buff, (int32_t) (drand() * 99999999), endian_big);
-  put_4_bytes(client->dencrpt->buff, (int32_t) (sessionID >> 32), endian_big);
-  put_4_bytes(client->dencrpt->buff, (int32_t) sessionID, endian_big);
-  put_4_bytes(client->dencrpt->buff, 0, endian_big); // UID
-  put_string(client->dencrpt->buff, user);
-  put_string(client->dencrpt->buff, pass);
-  encryptPacketWithKeys(client->dencrpt);
+  put_4_bytes(client->dencrpt.buff, (int32_t) (drand() * 99999999), endian_big);
+  put_4_bytes(client->dencrpt.buff, (int32_t) (drand() * 99999999), endian_big);
+  put_4_bytes(client->dencrpt.buff, (int32_t) (sessionID >> 32), endian_big);
+  put_4_bytes(client->dencrpt.buff, (int32_t) sessionID, endian_big);
+  put_4_bytes(client->dencrpt.buff, 0, endian_big); // UID
+  put_string(client->dencrpt.buff, user);
+  put_string(client->dencrpt.buff, pass);
+  encryptPacketWithKeys(&client->dencrpt);
   
   createPacket(client->pkt_out, client->outbuffer, 0);
   put_1_byte(client->outbuffer, 0);
   put_2_bytes(client->outbuffer, 25, endian_big); // client version
-  put_buffer(client->dencrpt->buff, client->outbuffer, get_used(client->dencrpt->buff));
+  put_buffer(client->dencrpt.buff, client->outbuffer, get_used(client->dencrpt.buff));
   formatPacket(client->pkt_out, client->outbuffer);
   put_bfr_out(client->stream, client->outbuffer);
   reset(client->outbuffer);

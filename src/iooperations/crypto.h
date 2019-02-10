@@ -1,23 +1,24 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
+#include <stdbool.h>
+
 #include <gmp.h>
 
 #include "buffer.h"
 
-struct crypto_struct
+struct rsa_crypto
 {
   IOBuffer buff;
   mpz_t encrptkey, encrptmod;
 };
-typedef struct crypto_struct *Crypto;
 
 /** Constructor */
-Crypto crypto_ctor();
+bool crypto_ctor(struct rsa_crypto *crypto);
 /** Destructor */
-void crypto_dtor(Crypto obj);
+void crypto_dtor(struct rsa_crypto *crypto);
 
-void decryptPackgetWithKeys(Crypto self);
-void encryptPacketWithKeys(Crypto self);
+void decryptPackgetWithKeys(struct rsa_crypto *crypto);
+void encryptPacketWithKeys(struct rsa_crypto *crypto);
 
 #endif // CRYPTO_H

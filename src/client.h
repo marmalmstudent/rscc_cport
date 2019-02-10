@@ -10,7 +10,7 @@
 
 struct rsc_client {
   IOStream stream;
-  Crypto dencrpt;
+  struct rsa_crypto dencrpt;
   PacketConstruct pkt_out;
   pthread_t thrd;
 

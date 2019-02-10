@@ -3,8 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <rsc/io/intops.h>
-
 #include "buffer.h"
 
 IOBuffer buffer_ctor(int bsize)

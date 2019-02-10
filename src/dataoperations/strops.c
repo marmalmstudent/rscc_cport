@@ -1,7 +1,7 @@
-#include "../../include/dataoperations/strops.h"
-
 #include <string.h>
-#include <ctype.h> // for tolower & toupper
+#include <ctype.h>
+
+#include <rsc/io/strops.h>
 
 int skipLeadingNonChars(const char *src)
 {

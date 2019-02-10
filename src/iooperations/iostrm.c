@@ -1,5 +1,3 @@
-#include "../../include/iooperations/iostrm.h"
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -9,7 +7,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "../../include/iooperations/buffer.h"
+#include "buffer.h"
+
+#include "iostrm.h"
 
 #define BUFF_SIZE 5000
 

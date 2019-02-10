@@ -1,6 +1,6 @@
-#include "../../include/dataoperations/intops.h"
-
 #include <string.h>
+
+#include <rsc/io/intops.h>
 
 union s1b_uni { char c[sizeof(char)]; char i; };
 union u1b_uni { char c[sizeof(char)]; unsigned char i; };

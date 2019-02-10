@@ -1,10 +1,9 @@
-#include "../../include/iooperations/crypto.h"
-
 #include <stdlib.h>
 #include <gmp.h>
 #include <string.h>
 
-#include "../../include/dataoperations/intops.h"
+#include <rsc/io/intops.h>
+#include "crypto.h"
 
 #define BUFF_SIZE 500
 

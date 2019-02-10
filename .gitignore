@@ -1,5 +1,7 @@
-bin/
-obj/
 local/
-rscclient.layout
-rscclient.depend
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+build
+.dir-locals.el

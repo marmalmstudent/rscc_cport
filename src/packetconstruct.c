@@ -1,10 +1,11 @@
-#include "../../include/client/packetconstruct.h"
-
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../include/iooperations/buffer.h"
-#include "../../include/dataoperations/strops.h"
+#include <rsc/io/strops.h>
+
+#include "iooperations/buffer.h"
+
+#include "packetconstruct.h"
 
 #define BUFF_SIZE 5000
 #define PKT_LEN_SIZE 2 /* packet length allocated 2 bytes */

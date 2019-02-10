@@ -1,7 +1,7 @@
 #ifndef PACKETCONSTRUCT_H
 #define PACKETCONSTRUCT_H
 
-#include "../iooperations/buffer.h"
+#include "iooperations/buffer.h"
 
 /** Handles creating packets. one should create packets and then get the
     packet data, which can be sent to the server using the functions in

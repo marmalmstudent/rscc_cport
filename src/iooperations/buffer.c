@@ -1,10 +1,11 @@
-#include "../../include/iooperations/buffer.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <endian.h>
-#include "../../include/dataoperations/intops.h"
+
+#include <rsc/io/intops.h>
+
+#include "buffer.h"
 
 struct step_struct
 {

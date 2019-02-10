@@ -27,6 +27,7 @@ int skipTrailingNonChars(const char *src)
 
 void addCharacters(const char *src, char *dst, int len)
 {
+    char const *p = dst;
     int l = strlen(src);
     for (int i = 0; i < len; i++)
     {
@@ -42,6 +43,7 @@ void addCharacters(const char *src, char *dst, int len)
             ++src;
         }
     }
+    printf("dst: '%s'", p);
 }
 
 long stringLength12ToLong(const char *src)

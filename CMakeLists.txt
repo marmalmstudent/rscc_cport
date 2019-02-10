@@ -17,7 +17,7 @@ file( GLOB_RECURSE HDRS ${CMAKE_SOURCE_DIR}/src/*.h )
 # Lets LOAD app our sources!
 file( GLOB_RECURSE SRCS ${CMAKE_SOURCE_DIR}/src/*.c )
 
-configure_file( configuration/root_directory.h.in configuration/root_directory.h @ONLY@ )
+configure_file( configuration/root_directory.h.in configuration/root_directory.h @ONLY )
 include_directories( ${CMAKE_BINARY_DIR}/configuration )
 
 # Define the executable

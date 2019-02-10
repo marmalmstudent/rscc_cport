@@ -104,13 +104,19 @@ int socketwrite(IOStream self)
 {
     int flag = 0;
     int buff_len = self->bfr_out.offset;
-    int byteswritten = write(
-            self->sockfd, self->bfr_out.data, buff_len);
+    printf("[ ");
+    for (int i = 0; i < buff_len; ++ i) {
+      printf("%02x ", (uint8_t)self->bfr_out.data[i]);
+    }
+    printf("]\n");
+    int byteswritten = send(self->sockfd, self->bfr_out.data, buff_len, 0);
+    printf("Wrote %d bytes\n", byteswritten);
     bfr_reset(&self->bfr_out);
     if (byteswritten != buff_len)
         flag = 1; // could not write entire buffer to socket
     else if (byteswritten < 0)
         flag = -1; // could not write any data to socket
+    printf("Socket write status: %d\n", flag);
     return flag;
 }
 
@@ -125,8 +131,7 @@ int socketread(IOStream self, int len)
         len_read = BUFF_SIZE;
         flag |= 2; // buffer size not big enough
     }
-    int bytesread = read(
-            self->sockfd, self->bfr_in.data + self->bfr_in.offset, len_read);
+    int bytesread = recv(self->sockfd, self->bfr_in.data + self->bfr_in.offset, len_read, 0);
     if (bytesread >= 0)
     {
         if (bytesread != len_read)
@@ -135,6 +140,13 @@ int socketread(IOStream self, int len)
     }
     else
         flag = -1; // an error occured
+    
+    printf("[ ");
+    for (int i = 0; i < self->bfr_in.offset; ++i) {
+      printf("%02x ", (uint8_t)self->bfr_in.data[i]);
+    }
+    printf("]\n");
+    printf("Socket read status: %d\n", flag);
     return flag;
 }
 
@@ -199,6 +211,6 @@ void put_bfr_out(IOStream self, const IOBuffer src)
 
 void get_bfr_in(IOStream self, IOBuffer dst)
 {
-    put_data(dst, self->bfr_in.data, self->bfr_in.offset);
+    data_copy(dst, self->bfr_in.data, self->bfr_in.offset);
     bfr_reset(&self->bfr_in);
 }

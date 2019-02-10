@@ -1,133 +1,133 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <unistd.h>
 #include <pthread.h>
 
 #include <rsc/io/strops.h>
-
-#include "iooperations/iostrm.h"
-#include "iooperations/crypto.h"
-#include "packetconstruct.h"
 
 #include "client.h"
 
 #define BUFF_SIZE 5000
 
-struct client_struct
-{
-  IOStream stream;
-  Crypto dencrpt;
-  PacketConstruct pkt_out;
-  pthread_t thrd;
-
-  IOBuffer inbuffer;
-  IOBuffer outbuffer;
-};
-
-void error(const char *msg)
-{
-  fprintf(stderr, "%s\n", msg);
-  exit(0);
+static double drand() {
+  return rand() / (RAND_MAX + 1.0);
 }
 
-/** prints the contents of the input buffer */
-static void print_server_response(Client c);
+bool client_ctor(struct rsc_client *client, char const *hostname, uint16_t port)
+{
+  client->stream = iostrm_ctor(hostname, port);
+  client->dencrpt = crypto_ctor();
+  client->pkt_out = pktcnstr_ctor();
+  client->inbuffer = buffer_ctor(BUFF_SIZE);
+  client->outbuffer = buffer_ctor(BUFF_SIZE);
+  return true;
+}
+
+void client_dtor(struct rsc_client *client)
+{
+  iostrm_dtor(client->stream);
+  crypto_dtor(client->dencrpt);
+  pktcnstr_dtor(client->pkt_out);
+  buffer_dtor(client->inbuffer);
+  buffer_dtor(client->outbuffer);
+}
 
 static int
-login()
+login(struct rsc_client *client)
 {
-  char username[20]; memset(username, 0, 20);
-  char password[20]; memset(password, 0, 20);
-  char user[20], pass[20];
-  printf("username: ");
-  scanf("%s", username);
+  char username[21];
+  memset(username, 0, 21);
+  sprintf(username, "%s", "user");
+  char password[21];
+  memset(password, 0, 21);
+  sprintf(password, "%s", "password");
+
+  char user[21];
+  memset(user, 0, 21);
   addCharacters(username, user, 20);
-  printf("password: ");
-  scanf("%s", password);
+  char pass[21];
+  memset(pass, 0, 21);
   addCharacters(password, pass, 20);
+
+  createPacket(client->pkt_out, client->outbuffer, 32);
+  /* packet data */
+  long l = stringLength12ToLong(user);
+  put_1_byte(client->outbuffer, (uint8_t) (l >> 16 & 0x1f));
+  put_string(client->outbuffer, "CLIENT.MUDCLIENT");
+  /* add packet length to data */
+  formatPacket(client->pkt_out, client->outbuffer);
+  put_bfr_out(client->stream, client->outbuffer);
+  reset(client->outbuffer);
+
+  socketread(client->stream, 8);
+  get_bfr_in(client->stream, client->inbuffer);
+  uint64_t sessionID = get_8_bytes(client->inbuffer, endian_big);
+  reset(client->inbuffer);
+  if (sessionID == 0) {
+    printf("Login server offline.\nPlease try again in a few mins\n");
+    return 0;
+  }
+  printf("Session ID: %lu\n", sessionID);
+
+  put_4_bytes(client->dencrpt->buff, (int32_t) (drand() * 99999999), endian_big);
+  put_4_bytes(client->dencrpt->buff, (int32_t) (drand() * 99999999), endian_big);
+  put_4_bytes(client->dencrpt->buff, (int32_t) (sessionID >> 32), endian_big);
+  put_4_bytes(client->dencrpt->buff, (int32_t) sessionID, endian_big);
+  put_4_bytes(client->dencrpt->buff, 0, endian_big); // UID
+  put_string(client->dencrpt->buff, user);
+  put_string(client->dencrpt->buff, pass);
+  encryptPacketWithKeys(client->dencrpt);
+  
+  createPacket(client->pkt_out, client->outbuffer, 0);
+  put_1_byte(client->outbuffer, 0);
+  put_2_bytes(client->outbuffer, 25, endian_big); // client version
+  put_buffer(client->dencrpt->buff, client->outbuffer, get_used(client->dencrpt->buff));
+  formatPacket(client->pkt_out, client->outbuffer);
+  put_bfr_out(client->stream, client->outbuffer);
+  reset(client->outbuffer);
+  
+  socketread(client->stream, 1);
+  get_bfr_in(client->stream, client->inbuffer);
+  uint8_t loginResponse = get_1_byte(client->inbuffer);
+  reset(client->inbuffer);
+  printf(" - Login Response: %d\n", loginResponse);
+
+  sleep(5);
+
+  printf("Loggin out...\n");
+  createPacket(client->pkt_out, client->outbuffer, 39);
+  formatPacket(client->pkt_out, client->outbuffer);
   return 0;
 }
 
 int main(int argc, char *argv[])
 {
   if (argc < 3) { // insufficient arguments
-    fprintf(stderr, "usage %s hostname port\n", argv[0]);
-    exit(0);
+    fprintf(stderr, "usage %s [hostname] [port]\n", argv[0]);
+    return EXIT_FAILURE;
   }
-  Client c = client_ctor(argv[1], (unsigned int)atoi(argv[2]));
+  struct rsc_client c;
+  client_ctor(&c, argv[1], (uint16_t)atoi(argv[2]));
 
-  if (openSocket(c->stream) < 0)
-    error("ERROR opening socket");
-  if (connectSock(c->stream) < 0)
-    error("ERROR connecting");
+  if (openSocket(c.stream) < 0) {
+    fprintf(stderr, "ERROR opening socket\n");
+    return EXIT_FAILURE;
+  }
+  if (connectSock(c.stream) < 0) {
+    fprintf(stderr, "ERROR connecting\n");
+    return EXIT_FAILURE;
+  }
 
   /* start thread, it writes to the socket */
-  iostrm_tstart(c->stream, &c->thrd);
+  iostrm_tstart(c.stream, &c.thrd);
 
-  /* for testing. trying to see if the enctryption and
-     packet part works */
-  makeSessionPacket(c->pkt_out, c->outbuffer, "admin");
+  login(&c);
 
-  printf("Please enter the message: ");
-  if (stdinread(c, 1234) < 0)
-    error("ERROR reading from standard input");
-  /* write output buffer to sream output buffer.
-     the output thread should send the message. */
-  put_bfr_out(c->stream, c->outbuffer);
+  closeSocket(c.stream);
+  pthread_join(c.thrd, NULL); // wait for thread to finish
 
-  // read from socket
-  if (socketread(c->stream, 1234) < 0)
-    error("ERROR reading from socket");
-  get_bfr_in(c->stream, c->inbuffer);
-  print_server_response(c);
-
-  closeSocket(c->stream);
-  pthread_join(c->thrd, NULL); // wait for thread to finish
-
-  client_dtor(c);
+  client_dtor(&c);
   return 0;
-}
-
-Client client_ctor(const char * hostname, unsigned int port)
-{
-  Client c = (Client)malloc(sizeof(struct client_struct));
-  c->stream = iostrm_ctor(hostname, port);
-  c->dencrpt = crypto_ctor();
-  c->pkt_out = pktcnstr_ctor();
-  c->inbuffer = buffer_ctor(BUFF_SIZE);
-  c->outbuffer = buffer_ctor(BUFF_SIZE);
-  return c;
-}
-
-void client_dtor(Client obj)
-{
-  iostrm_dtor(obj->stream);
-  crypto_dtor(obj->dencrpt);
-  pktcnstr_dtor(obj->pkt_out);
-  buffer_dtor(obj->inbuffer);
-  buffer_dtor(obj->outbuffer);
-  free(obj);
-  obj = NULL;
-}
-
-static void print_server_response(Client c)
-{
-  char print_dat[get_used(c->inbuffer)+1];
-  get_data(c->inbuffer, print_dat);
-  print_dat[get_used(c->inbuffer)] = 0;
-  printf("%s\n", print_dat);
-}
-
-/* reads len bytes of data from the standard input */
-int stdinread(Client self, int len)
-{
-  int read_len = len < BUFF_SIZE ? len : BUFF_SIZE;
-  char buff[read_len];
-  char * tmp = fgets(buff, read_len, stdin);
-  if (tmp != NULL)
-    {
-      put_data(self->outbuffer, tmp, strlen(tmp));
-      return 1;
-    }
-  return -1;
 }

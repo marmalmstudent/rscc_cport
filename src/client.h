@@ -1,17 +1,26 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-/** Prints an error message and exits the program */
-void error(const char *msg);
+#include <stdbool.h>
+#include <stdint.h>
 
-typedef struct client_struct *Client;
+#include "iooperations/iostrm.h"
+#include "iooperations/crypto.h"
+#include "packetconstruct.h"
+
+struct rsc_client {
+  IOStream stream;
+  Crypto dencrpt;
+  PacketConstruct pkt_out;
+  pthread_t thrd;
+
+  IOBuffer inbuffer;
+  IOBuffer outbuffer;
+};
 
 /** Constructor */
-Client client_ctor(const char * hostname, unsigned int port);
+bool client_ctor(struct rsc_client *client, char const *hostname, uint16_t port);
 /** Destructor */
-void client_dtor(Client obj);
-
-/** reads len bytes of data from the standard input */
-int stdinread(Client self, int len);
+void client_dtor(struct rsc_client *client);
 
 #endif // CLIENT_H

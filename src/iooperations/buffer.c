@@ -1,24 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <endian.h>
+#include <stdint.h>
 
 #include <rsc/io/intops.h>
 
 #include "buffer.h"
-
-struct step_struct
-{
-    int offset; /* the beginning of the allocaded space */
-    int len; /* the size of the allocated space */
-};
-
-struct buffer_struct
-{
-    char *bfr;
-    int offset;
-    struct step_struct header;
-};
 
 IOBuffer buffer_ctor(int bsize)
 {
@@ -89,6 +76,17 @@ void buffer_copy(const IOBuffer src, IOBuffer dst, int len)
     memcpy(dst->bfr + dst->offset, src->bfr, len);
 }
 
+void data_copy(IOBuffer self, const char *data, int len)
+{
+    memcpy(self->bfr + self->offset, data, len);
+}
+
+void put_buffer(const IOBuffer src, IOBuffer dst, int len)
+{
+    memcpy(dst->bfr + dst->offset, src->bfr, len);
+    dst->offset += len;
+}
+
 void put_data(IOBuffer self, const char *data, int len)
 {
     memcpy(self->bfr + self->offset, data, len);
@@ -100,49 +98,124 @@ char *get_data(const IOBuffer self, char *dst)
     return dst;
 }
 
-
 unsigned char get_1_byte(IOBuffer self)
 {
-    return ru1b(self->bfr + self->offset++);
+  return self->bfr[self->offset++];
 }
-unsigned short get_2_bytes(IOBuffer self, int endian)
+unsigned short get_2_bytes(IOBuffer self, enum endian e)
 {
-    unsigned short ret = ru2b(self->bfr + self->offset);
-    self->offset += 2;
-    return endian >= 0 ? be16toh(ret) : le16toh(ret);
+  self->offset += 2;
+  if (e == endian_big) {
+    return (((self->bfr[self->offset-2] & (uint64_t)0xff) << 8) |
+	    ((self->bfr[self->offset-1] & (uint64_t)0xff)     ));
+  } else {
+    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 8) |
+	    ((self->bfr[self->offset-2] & (uint64_t)0xff)     ));
+  }
 }
-unsigned int get_4_bytes(IOBuffer self, int endian)
+unsigned int get_4_bytes(IOBuffer self, enum endian e)
 {
-    unsigned int ret = ru4b(self->bfr + self->offset);
-    self->offset += 4;
-    return endian >= 0 ? be32toh(ret) : le32toh(ret);
+  self->offset += 4;
+  if (e == endian_big) {
+    return (((self->bfr[self->offset-4] & (uint64_t)0xff) << 24) |
+	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 16) |
+	    ((self->bfr[self->offset-2] & (uint64_t)0xff) <<  8) |
+	    ((self->bfr[self->offset-1] & (uint64_t)0xff)      ));
+  } else {
+    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 24) |
+	    ((self->bfr[self->offset-2] & (uint64_t)0xff) << 16) |
+	    ((self->bfr[self->offset-3] & (uint64_t)0xff) <<  8) |
+	    ((self->bfr[self->offset-4] & (uint64_t)0xff)      ));
+  }
 }
-unsigned long get_8_bytes(IOBuffer self, int endian)
+unsigned long get_8_bytes(IOBuffer self, enum endian e)
 {
-    unsigned long ret = ru8b(self->bfr + self->offset);
-    self->offset += 8;
-    return endian >= 0 ? be64toh(ret) : le64toh(ret);
+  printf("[ ");
+  for (int i = 0; i < self->offset; ++i) {
+    printf("%02x ", (unsigned char)self->bfr[i]);
+  }
+  printf("]\n");
+
+  self->offset += 8;
+  if (e == endian_big) {
+    return (((self->bfr[self->offset-8] & (uint64_t)0xff) << 56) |
+	    ((self->bfr[self->offset-7] & (uint64_t)0xff) << 48) |
+	    ((self->bfr[self->offset-6] & (uint64_t)0xff) << 40) |
+	    ((self->bfr[self->offset-5] & (uint64_t)0xff) << 32) |
+	    ((self->bfr[self->offset-4] & (uint64_t)0xff) << 24) |
+	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 16) |
+	    ((self->bfr[self->offset-2] & (uint64_t)0xff) <<  8) |
+	    ((self->bfr[self->offset-1] & (uint64_t)0xff)      ));
+  } else {
+    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 56) |
+	    ((self->bfr[self->offset-2] & (uint64_t)0xff) << 48) |
+	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 40) |
+	    ((self->bfr[self->offset-4] & (uint64_t)0xff) << 32) |
+	    ((self->bfr[self->offset-5] & (uint64_t)0xff) << 24) |
+	    ((self->bfr[self->offset-6] & (uint64_t)0xff) << 16) |
+	    ((self->bfr[self->offset-7] & (uint64_t)0xff) <<  8) |
+	    ((self->bfr[self->offset-8] & (uint64_t)0xff)      ));
+  }
 }
 
 void put_1_byte(IOBuffer self, unsigned char var)
 {
-    wu1b(self->bfr + self->offset++, var);
+  self->bfr[self->offset++] = var;
 }
-void put_2_bytes(IOBuffer self, unsigned short var, int endian)
+void put_2_bytes(IOBuffer self, unsigned short var, enum endian e)
 {
-    wu2b(self->bfr + self->offset,
-         endian >= 0 ? htobe16(var) : htole16(var));
-    self->offset += 2;
+  self->offset += 2;
+  if (e == endian_big) {
+    self->bfr[self->offset-2] = var >> 8 & 0xff;
+    self->bfr[self->offset-1] = var      & 0xff;
+  } else {
+    self->bfr[self->offset-1] = var >> 8 & 0xff;
+    self->bfr[self->offset-2] = var      & 0xff;
+  }
 }
-void put_4_bytes(IOBuffer self, unsigned int var, int endian)
+void put_4_bytes(IOBuffer self, unsigned int var, enum endian e)
 {
-    wu4b(self->bfr + self->offset,
-         endian >= 0 ? htobe32(var) : htole32(var));
-    self->offset += 4;
+  self->offset += 4;
+  if (e == endian_big) {
+    self->bfr[self->offset-4] = var >> 24 & 0xff;
+    self->bfr[self->offset-3] = var >> 16 & 0xff;
+    self->bfr[self->offset-2] = var >>  8 & 0xff;
+    self->bfr[self->offset-1] = var       & 0xff;
+  } else {
+    self->bfr[self->offset-1] = var >> 24 & 0xff;
+    self->bfr[self->offset-2] = var >> 16 & 0xff;
+    self->bfr[self->offset-3] = var >>  8 & 0xff;
+    self->bfr[self->offset-4] = var       & 0xff;
+  }
 }
-void put_8_bytes(IOBuffer self, unsigned long var, int endian)
+void put_8_bytes(IOBuffer self, unsigned long var, enum endian e)
 {
-    wu8b(self->bfr + self->offset,
-         endian >= 0 ? htobe64(var) : htole64(var));
-    self->offset += 8;
+  self->offset += 8;
+  if (e == endian_big) {
+    self->bfr[self->offset-8] = var >> 56 & 0xff;
+    self->bfr[self->offset-7] = var >> 48 & 0xff;
+    self->bfr[self->offset-6] = var >> 40 & 0xff;
+    self->bfr[self->offset-5] = var >> 32 & 0xff;
+    self->bfr[self->offset-4] = var >> 24 & 0xff;
+    self->bfr[self->offset-3] = var >> 16 & 0xff;
+    self->bfr[self->offset-2] = var >>  8 & 0xff;
+    self->bfr[self->offset-1] = var       & 0xff;
+  } else {
+    self->bfr[self->offset-1] = var >> 56 & 0xff;
+    self->bfr[self->offset-2] = var >> 48 & 0xff;
+    self->bfr[self->offset-3] = var >> 40 & 0xff;
+    self->bfr[self->offset-4] = var >> 32 & 0xff;
+    self->bfr[self->offset-5] = var >> 24 & 0xff;
+    self->bfr[self->offset-6] = var >> 16 & 0xff;
+    self->bfr[self->offset-7] = var >>  8 & 0xff;
+    self->bfr[self->offset-8] = var       & 0xff;
+  }
+}
+
+void put_string(IOBuffer self, char const *str)
+{
+  size_t len = strlen(str);
+  memcpy(self->bfr + self->offset, str, len);
+  self->offset += len;
+  put_1_byte(self, 10);
 }

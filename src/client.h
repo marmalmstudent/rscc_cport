@@ -9,13 +9,13 @@
 #include "packetconstruct.h"
 
 struct rsc_client {
-  IOStream stream;
+  struct io_stream stream;
   struct rsa_crypto dencrpt;
-  PacketConstruct pkt_out;
+  struct packet_construct pkt_out;
   pthread_t thrd;
 
-  IOBuffer inbuffer;
-  IOBuffer outbuffer;
+  struct data_buffer inbuffer;
+  struct data_buffer outbuffer;
 };
 
 /** Constructor */

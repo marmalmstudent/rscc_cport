@@ -5,215 +5,205 @@
 
 #include "buffer.h"
 
-IOBuffer buffer_ctor(int bsize)
+bool buffer_ctor(struct data_buffer *buffer)
 {
-    IOBuffer b = (IOBuffer)malloc(sizeof(struct buffer_struct));
-    b->bfr = (char *)calloc(bsize, sizeof(char));
-    b->offset = 0;
-    b->header.offset = -1;
-    return b;
+  memset(buffer->bfr, 0, sizeof(buffer->bfr));
+  buffer->offset = 0;
+  buffer->header.offset = -1;
+  return true;
 }
 
-void buffer_dtor(IOBuffer obj)
+void buffer_dtor(struct data_buffer *buffer)
 {
-    free(obj->bfr);
-    obj->bfr = NULL;
-    free(obj);
-    obj = NULL;
+  (void)buffer;
 }
 
-int get_used(const IOBuffer self)
+int get_used(struct data_buffer const *buffer)
 {
-    return self->offset;
+  return buffer->offset;
 }
 
-int push_alloc(IOBuffer self, int steps)
+int push_alloc(struct data_buffer *buffer, size_t steps)
 {
-    if (self->header.offset >= 0) /* previously allocated memory exists */
-        return -1;
-    self->header.offset = self->offset;
-    self->header.len = steps;
-    self->offset += steps;
-    return 1;
+  if (buffer->header.offset >= 0) /* previously allocated memory exists */
+    return -1;
+  buffer->header.offset = buffer->offset;
+  buffer->header.len = steps;
+  buffer->offset += steps;
+  return 1;
 }
 
-int pop_alloc(IOBuffer self, const char *data, int len)
+int pop_alloc(struct data_buffer *buffer, char const *data, size_t len)
 {
-    if (self->header.offset < 0 /* push_step has not preceded call to pop_step */
-            || self->header.len < len)
-        return -1;
+  if (buffer->header.offset < 0 /* push_step has not preceded call to pop_step */
+      || buffer->header.len < len)
+    return -1;
 
-    /* add data to allocated part of buffer */
-    int tmp = self->offset;
-    self->offset = self->header.offset;
-    put_data(self, data, len);
-    self->offset = tmp;
+  /* add data to allocated part of buffer */
+  int tmp = buffer->offset;
+  buffer->offset = buffer->header.offset;
+  put_data(buffer, data, len);
+  buffer->offset = tmp;
 
-    /* update allocated memory */
-    self->header.offset += len;
-    self->header.len -= len;
-    return 1;
+  /* update allocated memory */
+  buffer->header.offset += len;
+  buffer->header.len -= len;
+  return 1;
 }
 
-void dealloc(IOBuffer self)
+void dealloc(struct data_buffer *buffer)
 {
-    self->header.offset = -1;
-    self->header.len = 0;
+  buffer->header.offset = -1;
+  buffer->header.len = 0;
 }
 
-int reset(IOBuffer self)
+int reset(struct data_buffer *buffer)
 {
-    memset(self->bfr, 0, self->offset);
-    int data_len = get_used(self);
-    self->offset = 0;
-    return data_len;
+  memset(buffer->bfr, 0, buffer->offset);
+  int data_len = get_used(buffer);
+  buffer->offset = 0;
+  return data_len;
 }
 
-void buffer_copy(const IOBuffer src, IOBuffer dst, int len)
+void buffer_copy(struct data_buffer const *src, struct data_buffer *dst, size_t len)
 {
-    memcpy(dst->bfr + dst->offset, src->bfr, len);
+  memcpy(dst->bfr + dst->offset, src->bfr, len);
 }
 
-void data_copy(IOBuffer self, const char *data, int len)
+void data_copy(struct data_buffer *buffer, char const *data, size_t len)
 {
-    memcpy(self->bfr + self->offset, data, len);
+  memcpy(buffer->bfr + buffer->offset, data, len);
 }
 
-void put_buffer(const IOBuffer src, IOBuffer dst, int len)
+void put_buffer(struct data_buffer const *src, struct data_buffer *dst, size_t len)
 {
-    memcpy(dst->bfr + dst->offset, src->bfr, len);
-    dst->offset += len;
+  memcpy(dst->bfr + dst->offset, src->bfr, len);
+  dst->offset += len;
 }
 
-void put_data(IOBuffer self, const char *data, int len)
+void put_data(struct data_buffer *buffer, char const *data, size_t len)
 {
-    memcpy(self->bfr + self->offset, data, len);
-    self->offset += len;
+  memcpy(buffer->bfr + buffer->offset, data, len);
+  buffer->offset += len;
 }
-char *get_data(const IOBuffer self, char *dst)
+char *get_data(struct data_buffer const *buffer, char *dst)
 {
-    memcpy(dst, self->bfr, self->offset);
+    memcpy(dst, buffer->bfr, buffer->offset);
     return dst;
 }
 
-unsigned char get_1_byte(IOBuffer self)
+unsigned char get_1_byte(struct data_buffer *buffer)
 {
-  return self->bfr[self->offset++];
+  return buffer->bfr[buffer->offset++];
 }
-unsigned short get_2_bytes(IOBuffer self, enum endian e)
+unsigned short get_2_bytes(struct data_buffer *buffer, enum endian e)
 {
-  self->offset += 2;
+  buffer->offset += 2;
   if (e == endian_big) {
-    return (((self->bfr[self->offset-2] & (uint64_t)0xff) << 8) |
-	    ((self->bfr[self->offset-1] & (uint64_t)0xff)     ));
+    return (((buffer->bfr[buffer->offset-2] & (uint64_t)0xff) << 8) |
+	    ((buffer->bfr[buffer->offset-1] & (uint64_t)0xff)     ));
   } else {
-    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 8) |
-	    ((self->bfr[self->offset-2] & (uint64_t)0xff)     ));
+    return (((buffer->bfr[buffer->offset-1] & (uint64_t)0xff) << 8) |
+	    ((buffer->bfr[buffer->offset-2] & (uint64_t)0xff)     ));
   }
 }
-unsigned int get_4_bytes(IOBuffer self, enum endian e)
+unsigned int get_4_bytes(struct data_buffer *buffer, enum endian e)
 {
-  self->offset += 4;
+  buffer->offset += 4;
   if (e == endian_big) {
-    return (((self->bfr[self->offset-4] & (uint64_t)0xff) << 24) |
-	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 16) |
-	    ((self->bfr[self->offset-2] & (uint64_t)0xff) <<  8) |
-	    ((self->bfr[self->offset-1] & (uint64_t)0xff)      ));
+    return (((buffer->bfr[buffer->offset-4] & (uint64_t)0xff) << 24) |
+	    ((buffer->bfr[buffer->offset-3] & (uint64_t)0xff) << 16) |
+	    ((buffer->bfr[buffer->offset-2] & (uint64_t)0xff) <<  8) |
+	    ((buffer->bfr[buffer->offset-1] & (uint64_t)0xff)      ));
   } else {
-    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 24) |
-	    ((self->bfr[self->offset-2] & (uint64_t)0xff) << 16) |
-	    ((self->bfr[self->offset-3] & (uint64_t)0xff) <<  8) |
-	    ((self->bfr[self->offset-4] & (uint64_t)0xff)      ));
+    return (((buffer->bfr[buffer->offset-1] & (uint64_t)0xff) << 24) |
+	    ((buffer->bfr[buffer->offset-2] & (uint64_t)0xff) << 16) |
+	    ((buffer->bfr[buffer->offset-3] & (uint64_t)0xff) <<  8) |
+	    ((buffer->bfr[buffer->offset-4] & (uint64_t)0xff)      ));
   }
 }
-unsigned long get_8_bytes(IOBuffer self, enum endian e)
+unsigned long get_8_bytes(struct data_buffer *buffer, enum endian e)
 {
-  printf("[ ");
-  for (int i = 0; i < self->offset; ++i) {
-    printf("%02x ", (unsigned char)self->bfr[i]);
-  }
-  printf("]\n");
-
-  self->offset += 8;
+  buffer->offset += 8;
   if (e == endian_big) {
-    return (((self->bfr[self->offset-8] & (uint64_t)0xff) << 56) |
-	    ((self->bfr[self->offset-7] & (uint64_t)0xff) << 48) |
-	    ((self->bfr[self->offset-6] & (uint64_t)0xff) << 40) |
-	    ((self->bfr[self->offset-5] & (uint64_t)0xff) << 32) |
-	    ((self->bfr[self->offset-4] & (uint64_t)0xff) << 24) |
-	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 16) |
-	    ((self->bfr[self->offset-2] & (uint64_t)0xff) <<  8) |
-	    ((self->bfr[self->offset-1] & (uint64_t)0xff)      ));
+    return (((buffer->bfr[buffer->offset-8] & (uint64_t)0xff) << 56) |
+	    ((buffer->bfr[buffer->offset-7] & (uint64_t)0xff) << 48) |
+	    ((buffer->bfr[buffer->offset-6] & (uint64_t)0xff) << 40) |
+	    ((buffer->bfr[buffer->offset-5] & (uint64_t)0xff) << 32) |
+	    ((buffer->bfr[buffer->offset-4] & (uint64_t)0xff) << 24) |
+	    ((buffer->bfr[buffer->offset-3] & (uint64_t)0xff) << 16) |
+	    ((buffer->bfr[buffer->offset-2] & (uint64_t)0xff) <<  8) |
+	    ((buffer->bfr[buffer->offset-1] & (uint64_t)0xff)      ));
   } else {
-    return (((self->bfr[self->offset-1] & (uint64_t)0xff) << 56) |
-	    ((self->bfr[self->offset-2] & (uint64_t)0xff) << 48) |
-	    ((self->bfr[self->offset-3] & (uint64_t)0xff) << 40) |
-	    ((self->bfr[self->offset-4] & (uint64_t)0xff) << 32) |
-	    ((self->bfr[self->offset-5] & (uint64_t)0xff) << 24) |
-	    ((self->bfr[self->offset-6] & (uint64_t)0xff) << 16) |
-	    ((self->bfr[self->offset-7] & (uint64_t)0xff) <<  8) |
-	    ((self->bfr[self->offset-8] & (uint64_t)0xff)      ));
+    return (((buffer->bfr[buffer->offset-1] & (uint64_t)0xff) << 56) |
+	    ((buffer->bfr[buffer->offset-2] & (uint64_t)0xff) << 48) |
+	    ((buffer->bfr[buffer->offset-3] & (uint64_t)0xff) << 40) |
+	    ((buffer->bfr[buffer->offset-4] & (uint64_t)0xff) << 32) |
+	    ((buffer->bfr[buffer->offset-5] & (uint64_t)0xff) << 24) |
+	    ((buffer->bfr[buffer->offset-6] & (uint64_t)0xff) << 16) |
+	    ((buffer->bfr[buffer->offset-7] & (uint64_t)0xff) <<  8) |
+	    ((buffer->bfr[buffer->offset-8] & (uint64_t)0xff)      ));
   }
 }
 
-void put_1_byte(IOBuffer self, unsigned char var)
+void put_1_byte(struct data_buffer *buffer, unsigned char var)
 {
-  self->bfr[self->offset++] = var;
+  buffer->bfr[buffer->offset++] = var;
 }
-void put_2_bytes(IOBuffer self, unsigned short var, enum endian e)
+void put_2_bytes(struct data_buffer *buffer, unsigned short var, enum endian e)
 {
-  self->offset += 2;
+  buffer->offset += 2;
   if (e == endian_big) {
-    self->bfr[self->offset-2] = var >> 8 & 0xff;
-    self->bfr[self->offset-1] = var      & 0xff;
+    buffer->bfr[buffer->offset-2] = var >> 8 & 0xff;
+    buffer->bfr[buffer->offset-1] = var      & 0xff;
   } else {
-    self->bfr[self->offset-1] = var >> 8 & 0xff;
-    self->bfr[self->offset-2] = var      & 0xff;
+    buffer->bfr[buffer->offset-1] = var >> 8 & 0xff;
+    buffer->bfr[buffer->offset-2] = var      & 0xff;
   }
 }
-void put_4_bytes(IOBuffer self, unsigned int var, enum endian e)
+void put_4_bytes(struct data_buffer *buffer, unsigned int var, enum endian e)
 {
-  self->offset += 4;
+  buffer->offset += 4;
   if (e == endian_big) {
-    self->bfr[self->offset-4] = var >> 24 & 0xff;
-    self->bfr[self->offset-3] = var >> 16 & 0xff;
-    self->bfr[self->offset-2] = var >>  8 & 0xff;
-    self->bfr[self->offset-1] = var       & 0xff;
+    buffer->bfr[buffer->offset-4] = var >> 24 & 0xff;
+    buffer->bfr[buffer->offset-3] = var >> 16 & 0xff;
+    buffer->bfr[buffer->offset-2] = var >>  8 & 0xff;
+    buffer->bfr[buffer->offset-1] = var       & 0xff;
   } else {
-    self->bfr[self->offset-1] = var >> 24 & 0xff;
-    self->bfr[self->offset-2] = var >> 16 & 0xff;
-    self->bfr[self->offset-3] = var >>  8 & 0xff;
-    self->bfr[self->offset-4] = var       & 0xff;
+    buffer->bfr[buffer->offset-1] = var >> 24 & 0xff;
+    buffer->bfr[buffer->offset-2] = var >> 16 & 0xff;
+    buffer->bfr[buffer->offset-3] = var >>  8 & 0xff;
+    buffer->bfr[buffer->offset-4] = var       & 0xff;
   }
 }
-void put_8_bytes(IOBuffer self, unsigned long var, enum endian e)
+void put_8_bytes(struct data_buffer *buffer, unsigned long var, enum endian e)
 {
-  self->offset += 8;
+  buffer->offset += 8;
   if (e == endian_big) {
-    self->bfr[self->offset-8] = var >> 56 & 0xff;
-    self->bfr[self->offset-7] = var >> 48 & 0xff;
-    self->bfr[self->offset-6] = var >> 40 & 0xff;
-    self->bfr[self->offset-5] = var >> 32 & 0xff;
-    self->bfr[self->offset-4] = var >> 24 & 0xff;
-    self->bfr[self->offset-3] = var >> 16 & 0xff;
-    self->bfr[self->offset-2] = var >>  8 & 0xff;
-    self->bfr[self->offset-1] = var       & 0xff;
+    buffer->bfr[buffer->offset-8] = var >> 56 & 0xff;
+    buffer->bfr[buffer->offset-7] = var >> 48 & 0xff;
+    buffer->bfr[buffer->offset-6] = var >> 40 & 0xff;
+    buffer->bfr[buffer->offset-5] = var >> 32 & 0xff;
+    buffer->bfr[buffer->offset-4] = var >> 24 & 0xff;
+    buffer->bfr[buffer->offset-3] = var >> 16 & 0xff;
+    buffer->bfr[buffer->offset-2] = var >>  8 & 0xff;
+    buffer->bfr[buffer->offset-1] = var       & 0xff;
   } else {
-    self->bfr[self->offset-1] = var >> 56 & 0xff;
-    self->bfr[self->offset-2] = var >> 48 & 0xff;
-    self->bfr[self->offset-3] = var >> 40 & 0xff;
-    self->bfr[self->offset-4] = var >> 32 & 0xff;
-    self->bfr[self->offset-5] = var >> 24 & 0xff;
-    self->bfr[self->offset-6] = var >> 16 & 0xff;
-    self->bfr[self->offset-7] = var >>  8 & 0xff;
-    self->bfr[self->offset-8] = var       & 0xff;
+    buffer->bfr[buffer->offset-1] = var >> 56 & 0xff;
+    buffer->bfr[buffer->offset-2] = var >> 48 & 0xff;
+    buffer->bfr[buffer->offset-3] = var >> 40 & 0xff;
+    buffer->bfr[buffer->offset-4] = var >> 32 & 0xff;
+    buffer->bfr[buffer->offset-5] = var >> 24 & 0xff;
+    buffer->bfr[buffer->offset-6] = var >> 16 & 0xff;
+    buffer->bfr[buffer->offset-7] = var >>  8 & 0xff;
+    buffer->bfr[buffer->offset-8] = var       & 0xff;
   }
 }
 
-void put_string(IOBuffer self, char const *str)
+void put_string(struct data_buffer *buffer, char const *str)
 {
   size_t len = strlen(str);
-  memcpy(self->bfr + self->offset, str, len);
-  self->offset += len;
-  put_1_byte(self, 10);
+  memcpy(buffer->bfr + buffer->offset, str, len);
+  buffer->offset += len;
+  put_1_byte(buffer, 10);
 }

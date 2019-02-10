@@ -7,9 +7,8 @@
 
 #include "buffer.h"
 
-struct rsa_crypto
-{
-  IOBuffer buff;
+struct rsa_crypto {
+  struct data_buffer buff;
   mpz_t encrptkey, encrptmod;
 };
 
